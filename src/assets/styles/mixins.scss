@@ -1,0 +1,45 @@
+@mixin btn {
+  position: relative;
+  display: block;
+  padding: 0.5em 0.75em;
+  background-color: #ffffff;
+  border: 0.1rem solid black;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: transform 0.05s;
+  min-height: 2rem;
+  min-width: 8rem;
+  font-family: "Comico-Regular";
+
+  &.btn--no-border {
+    border: none;
+  }
+
+  &.btn--icon-only {
+    padding: 0;
+    min-width: 2rem;
+    min-height: 2rem;
+
+    .btn__icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 60%;
+      height: 60%;
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  &.icon--small {
+    width: 45%;
+    height: 45%;
+  }
+
+  &:hover {
+    transform: translateY(-1px) scale(1.02);
+  }
+
+  &:active {
+    transform: translateY(0px);
+  }
+}

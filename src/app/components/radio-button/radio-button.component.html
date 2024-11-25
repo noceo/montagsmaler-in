@@ -1,0 +1,17 @@
+<input
+  type="radio"
+  id="{{ name }}-{{ option }}"
+  [name]="name"
+  attr.aria-label="{{ option }}"
+  [value]="option"
+  [checked]="isChecked"
+  (change)="onChange(option)"
+/>
+<div
+  class="radio-button__tile"
+  [ngClass]="{ primary: color === 'primary', secondary: color === 'secondary' }"
+>
+  @if (iconSrc) {
+  <svg-icon class="radio-button__icon" [ngClass]="iconSize" [src]="iconSrc" /> }
+  <label for="{{ name }}-{{ option }}" class="sr-only">Draw Line</label>
+</div>

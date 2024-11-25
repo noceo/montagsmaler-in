@@ -1,1 +1,30 @@
-/* You can add global styles to this file, and also import other style files */
+@import "./assets/styles/reset.scss";
+@import "./assets/styles/fonts.scss";
+@import "./assets/styles/mixins.scss";
+@import "./assets/styles/grid.scss";
+
+body {
+  font-family: "Synonym-Medium";
+}
+
+.sr-only {
+  border: 0 !important;
+  clip: rect(1px, 1px, 1px, 1px);
+  height: 1px !important;
+  overflow: hidden;
+  padding: 0 !important;
+  position: absolute !important;
+  width: 1px !important;
+}
+
+.btn {
+  @include btn;
+}
+
+input {
+  min-height: 2rem;
+  padding: 0.5rem;
+  height: unset;
+  border: 0.1rem solid black;
+  border-radius: 0.25rem;
+}

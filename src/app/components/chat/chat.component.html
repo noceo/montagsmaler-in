@@ -1,0 +1,16 @@
+<div #chatArea id="chat-area"></div>
+<div id="chat-input">
+  <input
+    #chatInput
+    [(ngModel)]="newMessage"
+    name="chatInput"
+    placeholder="Type your answer here..."
+  />
+  <button
+    class="btn btn--icon-only btn--no-border"
+    id="chat-btn-send"
+    (click)="onSend()"
+  >
+    <svg-icon class="btn__icon" src="assets/icons/send.svg" />
+  </button>
+</div>

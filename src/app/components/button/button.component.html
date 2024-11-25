@@ -1,0 +1,8 @@
+<button
+  (click)="onClickButton($event)"
+  class="btn"
+  [ngClass]="{ 'btn--icon-only': isIconOnly, 'btn--no-border': !border }"
+>
+  @if(iconSrc) { <svg-icon class="btn__icon" [src]="iconSrc" /> }
+  <ng-content>{{ text }}</ng-content>
+</button>

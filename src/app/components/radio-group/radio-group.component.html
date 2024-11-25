@@ -1,0 +1,13 @@
+<div class="radio-group">
+  @for (option of options; track option.value) {
+  <app-radio-button
+    [iconSrc]="option.iconSrc"
+    [iconSize]="option.iconSize || 'medium'"
+    [name]="name"
+    [option]="option.value"
+    [isChecked]="defaultValue === option.value"
+    [color]="color"
+    (selectionChange)="onChange($event)"
+  />
+  }
+</div>

@@ -1,0 +1,53 @@
+/**
+* @license
+*
+* Font Family: Comico
+* Designed by: Frode Helland
+* URL: https://www.fontshare.com/fonts/comico
+* © 2024 Indian Type Foundry
+*
+* Comico Regular 
+
+*
+*/
+@font-face {
+  font-family: "Comico-Regular";
+  src: url("../fonts/Comico-Regular.woff2") format("woff2"),
+    url("../fonts/Comico-Regular.woff") format("woff"),
+    url("../fonts/Comico-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+  font-style: normal;
+}
+
+/**
+* @license
+*
+* Font Family: Synonym
+* Designed by: Hugo Dumont
+* URL: https://www.fontshare.com/fonts/synonym
+* © 2024 Indian Type Foundry
+*
+* Synonym Regular 
+
+*
+*/
+@font-face {
+  font-family: "Synonym-Regular";
+  src: url("../fonts/Synonym-Regular.woff2") format("woff2"),
+    url("../fonts/Synonym-Regular.woff") format("woff"),
+    url("../fonts/Synonym-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Synonym-Medium";
+  src: url("../fonts/Synonym-Medium.woff2") format("woff2"),
+    url("../fonts/Synonym-Medium.woff") format("woff"),
+    url("../fonts/Synonym-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-display: swap;
+  font-style: normal;
+}
