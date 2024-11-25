@@ -4,7 +4,11 @@ import { ButtonComponent } from '../../components/button/button.component';
 import { MessagingService } from '../../services/messaging/messaging.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserService } from '../../services/user/user.service';
-import { JoinRoomMessage } from '../../types/message.types';
+import {
+  JoinRoomMessage,
+  LoginMessage,
+  MessageType,
+} from '../../types/message.types';
 import { Subscription } from 'rxjs';
 import { faker } from '@faker-js/faker';
 
@@ -36,7 +40,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.messagingSubscription = this.messagingService.subscribe((message) => {
       // if the server acknowledges that the client has joined
       console.log(message);
-      if (message.type === 'joinRoom') {
+      if (message.type === MessageType.JOIN_ROOM) {
         const joinRoomMessage = message as JoinRoomMessage;
 
         this.userService.setCurrentUser({
@@ -52,9 +56,9 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.messagingService.connect();
     this.messagingService.onConnection(() => {
       this.messagingService.send({
-        type: 'login',
+        type: MessageType.LOGIN,
         data: { userName: faker.internet.username(), roomCode: 'test' },
-      });
+      } as LoginMessage);
     });
   }
 

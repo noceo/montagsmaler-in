@@ -15,6 +15,7 @@ import {
   DrawShapeMessage,
   HistoryMessage,
   JoinRoomMessage,
+  MessageType,
   MouseMoveMessage,
 } from '../../types/message.types';
 import { v4 as uuidv4 } from 'uuid';
@@ -89,7 +90,7 @@ export class WhiteboardComponent implements OnDestroy {
 
     this.messagingService.onConnection(() => {
       this.messagingService.send({
-        type: 'login',
+        type: MessageType.LOGIN,
         data: { userName: this.userName },
       });
       //   this.messagingService.send({
@@ -121,32 +122,32 @@ export class WhiteboardComponent implements OnDestroy {
     // set up message handlers
     this.messagingServiceSubscription = this.messagingService.subscribe(
       (message) => {
-        if (message.type === 'joinRoom') {
+        if (message.type === MessageType.JOIN_ROOM) {
           this.canvasService.addCanvasLayer(
             (message as JoinRoomMessage).data.user.id,
             this.canvasContainerRef.nativeElement
           );
-        } else if (message.type === 'mouseMove')
+        } else if (message.type === MessageType.MOUSE_MOVE)
           this.canvasService.drawCursor(
             (message as MouseMoveMessage).userId,
             (message as MouseMoveMessage).data.position
           );
         //   this.drawCursor((message as MouseMoveMessage).data.position);
-        else if (message.type === 'drawPath') {
+        else if (message.type === MessageType.DRAW_PATH) {
           this.canvasService.drawShape(
             message.userId!,
             (message as DrawPathMessage).data.path,
             false
           );
-        } else if (message.type === 'drawShape') {
+        } else if (message.type === MessageType.DRAW_SHAPE) {
           this.canvasService.drawShape(
             (message as DrawShapeMessage).userId,
             (message as DrawShapeMessage).data.geometry,
             false
           );
-        } else if (message.type === 'clear') {
+        } else if (message.type === MessageType.CLEAR) {
           this.canvasService.clearCanvas(message.userId!);
-        } else if (message.type === 'history') {
+        } else if (message.type === MessageType.HISTORY) {
           this.userService.addUsers((message as HistoryMessage).data.users);
           //   this.canvasService.addCanvasLayers(
           //     (message as HistoryMessage).data.users,
@@ -224,7 +225,7 @@ export class WhiteboardComponent implements OnDestroy {
     const currentPos = this.getPoint(event);
 
     this.messagingService.send({
-      type: 'mouseMove',
+      type: MessageType.MOUSE_MOVE,
       userId: this.userId,
       data: { userId: this.userId, position: currentPos },
     });
@@ -271,7 +272,7 @@ export class WhiteboardComponent implements OnDestroy {
       this.sendNewPathChunk(true);
     } else {
       this.messagingService.send({
-        type: 'drawShape',
+        type: MessageType.DRAW_SHAPE,
         userId: this.userId,
         data: {
           userId: this.userId,
@@ -286,7 +287,7 @@ export class WhiteboardComponent implements OnDestroy {
   private sendNewPathChunk(isComplete: boolean = false) {
     const newPoints = this.currentPath.slice(this.lastSentIndex);
     const drawPathMessage: DrawPathMessage = {
-      type: 'drawPath',
+      type: MessageType.DRAW_PATH,
       userId: this.userId,
       data: {
         userId: this.userId,
@@ -315,7 +316,7 @@ export class WhiteboardComponent implements OnDestroy {
   onClear() {
     this.canvasService.clearCanvas(this.userId);
     this.messagingService.send({
-      type: 'clear',
+      type: MessageType.CLEAR,
       userId: this.userId,
       data: { userId: this.userId },
     });

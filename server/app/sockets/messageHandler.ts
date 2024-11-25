@@ -8,6 +8,7 @@ import {
   JoinRoomMessage,
   LoginMessage,
   Message,
+  MessageType,
 } from '../../types/message.types';
 import { nanoid } from 'nanoid';
 
@@ -26,7 +27,7 @@ export class MessageHandler {
       const msg: Message = JSON.parse(message);
 
       switch (msg.type) {
-        case 'login':
+        case MessageType.LOGIN:
           const loginMessage = msg as LoginMessage;
           this.handleLogin(
             ws,
@@ -41,7 +42,7 @@ export class MessageHandler {
         // case 'leaveRoom':
         //   this.handleLeaveRoom(userId, roomCode, ws);
         //   break;
-        case 'chat':
+        case MessageType.CHAT:
           const chatMessage = msg as ChatMessage;
           console.log(chatMessage);
           this.handleChatMessage(ws, chatMessage);
@@ -71,14 +72,14 @@ export class MessageHandler {
     this.webSocketManager.addClient(userId, ws, roomCode);
 
     // Notify the user of a successful login
-    this.webSocketManager.sendMessageToUser(userId, {
-      type: 'loginSuccess',
-      data: { roomCode: roomCode, userName: user.name },
-    } as LoginMessage);
+    // this.webSocketManager.sendMessageToUser(userId, {
+    //   type: 'loginSuccess',
+    //   data: { roomCode: roomCode, userName: user.name },
+    // } as LoginMessage);
 
     // Notify the room about the new user
     this.webSocketManager.broadcastToRoom(roomCode, {
-      type: 'joinRoom',
+      type: MessageType.JOIN_ROOM,
       data: {
         roomCode: roomCode,
         user: user,
@@ -87,7 +88,7 @@ export class MessageHandler {
 
     const currentUsers = this.roomManager.getUsersInRoom(roomCode);
     this.webSocketManager.sendMessageToUser(userId, {
-      type: 'init',
+      type: MessageType.INIT,
       data: { users: currentUsers, gameStatus: {}, settings: {} },
     } as InitMessage);
   }
@@ -102,7 +103,7 @@ export class MessageHandler {
     const successfullyRemoved = this.webSocketManager.removeClient(ws);
     if (successfullyRemoved) {
       this.webSocketManager.broadcastToRoom(roomCode, {
-        type: 'leaveRoom',
+        type: MessageType.LEAVE_ROOM,
         data: {
           roomCode: roomCode,
           userId: userId,
@@ -118,7 +119,7 @@ export class MessageHandler {
     if (!roomCode) return;
 
     this.webSocketManager.broadcastToRoom(roomCode, {
-      type: 'chat',
+      type: MessageType.CHAT,
       userId: message.userId,
       data: message.data,
     } as ChatMessage);

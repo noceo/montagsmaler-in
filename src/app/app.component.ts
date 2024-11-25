@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MessagingService } from './services/messaging/messaging.service';
 import { UserService } from './services/user/user.service';
-import { InitMessage } from './types/message.types';
+import { InitMessage, MessageType } from './types/message.types';
 
 @Component({
   selector: 'app-root',
@@ -21,8 +21,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     this.messagingService.subscribe((message) => {
-      if (message.type === 'init') {
-        console.log('Test');
+      if (message.type === MessageType.INIT) {
         const otherUsers = (message as InitMessage).data.users.filter(
           (user) => user.id !== this.userService.getCurrentUser()?.id
         );

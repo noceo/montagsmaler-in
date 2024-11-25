@@ -1,22 +1,39 @@
 import { Geometry, Path, Point } from './geometry.types';
 import { User } from './user.types';
 
+export enum MessageType {
+  LOGIN,
+  INIT,
+  JOIN_ROOM,
+  LEAVE_ROOM,
+  CHAT,
+  MOUSE_MOVE,
+  DRAW_PATH,
+  DRAW_SHAPE,
+  CLEAR,
+  HISTORY,
+}
+
 export type Message = {
-  type: string;
+  type: MessageType;
   userId?: string;
   data?: Record<string, any>;
 };
 
-export interface LoginMessage {
-  type: 'login';
+export interface LoginMessage extends Message {
   data: { userName: string; roomCode?: string };
 }
 
 export interface InitMessage extends Message {
   data: {
     users: User[];
-    settings: {};
-    gameStatus: {};
+    settings: {
+      userCount: number;
+      language: string;
+    };
+    gameStatus: {
+      phase: 'lobby' | 'chooseWord' | 'draw' | 'result';
+    };
   };
 }
 

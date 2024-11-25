@@ -1,8 +1,21 @@
 import { Geometry, Path } from './geometry.types';
 import { User } from './user.types';
 
+export enum MessageType {
+  LOGIN,
+  INIT,
+  JOIN_ROOM,
+  LEAVE_ROOM,
+  CHAT,
+  MOUSE_MOVE,
+  DRAW_PATH,
+  DRAW_SHAPE,
+  CLEAR,
+  HISTORY,
+}
+
 export type Message = {
-  type: string;
+  type: MessageType;
   userId?: string;
   data?: Record<string, any>;
 };

@@ -7,6 +7,7 @@ import {
   InitMessage,
   JoinRoomMessage,
   LeaveRoomMessage,
+  MessageType,
 } from '../../types/message.types';
 import { Subscription } from 'rxjs';
 import { ChatComponent } from '../../components/chat/chat.component';
@@ -28,7 +29,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.messagingSubscription = this.messagingService.subscribe((message) => {
-      if (message.type === 'joinRoom') {
+      if (message.type === MessageType.JOIN_ROOM) {
         console.log(
           (message as JoinRoomMessage).data.user.name,
           this.userService.getCurrentUser()?.name
@@ -43,7 +44,7 @@ export class GameComponent implements OnInit, OnDestroy {
           `User ${(message as JoinRoomMessage).data.user.name} joined.`
         );
         this.userService.addUser((message as JoinRoomMessage).data.user);
-      } else if (message.type === 'leaveRoom') {
+      } else if (message.type === MessageType.LEAVE_ROOM) {
         const leaveRoomMessage = message as LeaveRoomMessage;
         const leavingUser = this.userService.getUserById(
           leaveRoomMessage.data.userId

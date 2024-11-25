@@ -5,16 +5,15 @@ import {
   ViewEncapsulation,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ButtonComponent } from '../button/button.component';
 import { SvgIconComponent } from 'angular-svg-icon';
 import { UserService } from '../../services/user/user.service';
 import { MessagingService } from '../../services/messaging/messaging.service';
-import { ChatMessage } from '../../types/message.types';
+import { ChatMessage, MessageType } from '../../types/message.types';
 
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [FormsModule, ButtonComponent, SvgIconComponent],
+  imports: [FormsModule, SvgIconComponent],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',
   encapsulation: ViewEncapsulation.None,
@@ -36,7 +35,7 @@ export class ChatComponent {
     });
 
     this.messagingService.subscribe((message) => {
-      if (message.type !== 'chat') return;
+      if (message.type !== MessageType.CHAT) return;
       const chatMessage = message as ChatMessage;
       const user = this.userService.getUserById(chatMessage.userId);
       if (!user) return;
@@ -51,7 +50,7 @@ export class ChatComponent {
     this.addMessageToChatArea(currentUser.name, this.newMessage);
 
     this.messagingService.send({
-      type: 'chat',
+      type: MessageType.CHAT,
       userId: currentUser.id,
       data: {
         text: this.newMessage,
