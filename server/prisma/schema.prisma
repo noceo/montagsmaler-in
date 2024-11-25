@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./whiteboard.db"
+  url      = "file:./montagsmaler-in.db"
 }
 
 model Session {

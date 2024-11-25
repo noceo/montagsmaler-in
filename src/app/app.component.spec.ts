@@ -14,16 +14,18 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it(`should have the 'socket-whiteboard' title`, () => {
+  it(`should have the 'montagsmaler-in' title`, () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.title).toEqual('socket-whiteboard');
+    expect(app.title).toEqual('montagsmaler-in');
   });
 
   it('should render title', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, socket-whiteboard');
+    expect(compiled.querySelector('h1')?.textContent).toContain(
+      'Hello, montagsmaler-in'
+    );
   });
 });

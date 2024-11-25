@@ -12,7 +12,7 @@ import { InitMessage } from './types/message.types';
   styleUrl: './app.component.scss',
 })
 export class AppComponent implements OnInit {
-  title = 'socket-whiteboard';
+  title = 'montagsmaler-in';
 
   constructor(
     private messagingService: MessagingService,

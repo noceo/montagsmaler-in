@@ -1,4 +1,8 @@
-# SocketWhiteboard
+# Montagsmaler\*in
+
+This is a digital version of the game pictionary (german: Montagsmaler\*in). Players compete in guessing what another player or multiple other players are drawing on the whiteboard. The faster you are he more points you can get.
+
+## Overview
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.9.
 
