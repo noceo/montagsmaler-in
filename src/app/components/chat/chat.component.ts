@@ -37,17 +37,18 @@ export class ChatComponent {
     this.messagingService.subscribe((message) => {
       if (message.type !== MessageType.CHAT) return;
       const chatMessage = message as ChatMessage;
+      const currentUser = this.userService.getCurrentUser()!;
       const user = this.userService.getUserById(chatMessage.userId);
-      if (!user) return;
-      this.addMessageToChatArea(user.name, chatMessage.data.text);
+      if (!user && currentUser.id !== chatMessage.userId) return;
+
+      const username = user?.name || 'You';
+      this.addMessageToChatArea(username, chatMessage.data.text);
     });
   }
 
   onSend() {
     const currentUser = this.userService.getCurrentUser();
     if (!this.newMessage || !currentUser) return;
-
-    this.addMessageToChatArea(currentUser.name, this.newMessage);
 
     this.messagingService.send({
       type: MessageType.CHAT,
