@@ -11,11 +11,17 @@ import {
 } from '../../types/message.types';
 import { Subscription } from 'rxjs';
 import { ChatComponent } from '../../components/chat/chat.component';
+import { ToolbarComponent } from '../../components/toolbar/toolbar.component';
 
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [WhiteboardComponent, UserListComponent, ChatComponent],
+  imports: [
+    WhiteboardComponent,
+    UserListComponent,
+    ChatComponent,
+    ToolbarComponent,
+  ],
   templateUrl: './game.component.html',
   styleUrl: './game.component.scss',
 })

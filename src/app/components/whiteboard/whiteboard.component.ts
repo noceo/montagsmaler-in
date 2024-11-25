@@ -24,16 +24,18 @@ import { UserService } from '../../services/user/user.service';
 import { Subscription } from 'rxjs';
 import { faker } from '@faker-js/faker';
 import { Point } from '../../types/geometry.types';
-
-type StrokeWidth = 'tiny' | 'small' | 'medium' | 'big';
-type DrawMode = 'path' | 'line' | 'rect' | 'triangle' | 'ellipse';
+import {
+  DrawMode,
+  StrokeWidth,
+  ToolbarService,
+} from '../../services/toolbar/toolbar.service';
 
 @Component({
   selector: 'app-whiteboard',
   templateUrl: './whiteboard.component.html',
   styleUrl: './whiteboard.component.scss',
   encapsulation: ViewEncapsulation.None,
-  imports: [FormsModule, RadioGroupComponent, ButtonComponent],
+  imports: [FormsModule],
   standalone: true,
 })
 export class WhiteboardComponent implements OnDestroy {
@@ -60,9 +62,9 @@ export class WhiteboardComponent implements OnDestroy {
     ellipse: '/assets/icons/ellipse.svg',
   };
 
-  contextBaseColor = '#000000';
-  contextPreviewColor = this.getPreviewColor(this.contextBaseColor);
-  strokeWidthName: StrokeWidth = 'small';
+  //   contextBaseColor = '#000000';
+  //   contextPreviewColor = this.getPreviewColor(this.contextBaseColor);
+  //   strokeWidthName: StrokeWidth = 'small';
   strokeWidth = 15;
   mode: DrawMode = 'path';
   pathCursor = '../../assets/ions';
@@ -82,41 +84,9 @@ export class WhiteboardComponent implements OnDestroy {
   constructor(
     private userService: UserService,
     private canvasService: CanvasService,
-    private messagingService: MessagingService
+    private messagingService: MessagingService,
+    private toolbarService: ToolbarService
   ) {}
-
-  onJoinRoom() {
-    this.messagingService.connect();
-
-    this.messagingService.onConnection(() => {
-      this.messagingService.send({
-        type: MessageType.LOGIN,
-        data: { userName: this.userName },
-      });
-      //   this.messagingService.send({
-      //     type: 'joinRoom',
-      //     userId: this.userId,
-      //     data: { roomCode: 'testRoom' },
-      //   });
-    });
-  }
-
-  onModeChange(value: string) {
-    this.mode = value as DrawMode;
-  }
-
-  onStrokeColorChange(event: Event) {
-    const color = (event.target as HTMLInputElement).value;
-    this.contextBase.strokeStyle = color;
-    this.contextPreview.strokeStyle = this.getPreviewColor(color);
-  }
-
-  onStrokeWidthChange(value: string) {
-    this.strokeWidthName = value as StrokeWidth;
-    this.strokeWidth = this.strokeWidths[this.strokeWidthName];
-    this.contextBase.lineWidth = this.strokeWidth;
-    this.contextPreview.lineWidth = this.strokeWidth;
-  }
 
   ngAfterViewInit() {
     // set up message handlers
@@ -189,18 +159,25 @@ export class WhiteboardComponent implements OnDestroy {
     // set default styles
     this.contextBase.lineCap = 'round';
     this.contextBase.lineJoin = 'round';
-    this.contextBase.strokeStyle = this.contextBaseColor;
-    this.contextBase.lineWidth = this.strokeWidth;
     this.contextPreview.lineCap = 'round';
     this.contextPreview.lineJoin = 'round';
-    this.contextPreview.strokeStyle = this.getPreviewColor(
-      this.contextBaseColor
-    );
-    this.contextPreview.lineWidth = this.strokeWidth;
 
     this.canvasBaseRef.nativeElement.style.cursor =
       'url("/assets/icons/cursor_pen.svg") 0 24, auto';
     this.cursorImage.src = '/assets/icons/cursor_pen.svg';
+
+    this.toolbarService.mode$.subscribe((mode) => {
+      this.mode = mode;
+    });
+    this.toolbarService.strokeWidthName$.subscribe((strokeWidth) => {
+      this.strokeWidth = this.strokeWidths[strokeWidth];
+      this.contextBase.lineWidth = this.strokeWidth;
+      this.contextPreview.lineWidth = this.strokeWidth;
+    });
+    this.toolbarService.strokeColor$.subscribe((color) => {
+      this.contextBase.strokeStyle = color;
+      this.contextPreview.strokeStyle = this.getPreviewColor(color);
+    });
   }
 
   ngOnDestroy() {
@@ -295,7 +272,7 @@ export class WhiteboardComponent implements OnDestroy {
         path: {
           type: 'path',
           points: newPoints,
-          strokeColor: this.contextBaseColor,
+          strokeColor: this.contextBase.strokeStyle.toString(),
           strokeWidth: this.strokeWidth,
         },
         isComplete: isComplete,
