@@ -39,6 +39,10 @@
     color: white;
   }
 
+  input:focus-visible + .radio-button__tile {
+    outline: -webkit-focus-ring-color auto 1px;
+  }
+
   input:hover + .radio-button__tile {
     // transform: translateY(-1px) scale(1.02);
   }
