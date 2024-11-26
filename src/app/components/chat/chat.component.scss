@@ -2,7 +2,6 @@ app-chat {
   display: flex;
   flex-direction: column;
   min-height: 10rem;
-  max-height: 30rem;
   border: 0.1rem solid black;
   border-radius: 0.5rem;
   overflow: hidden;
@@ -10,6 +9,7 @@ app-chat {
 
 #chat-area {
   flex-grow: 1;
+  height: 2rem;
   overflow-y: scroll;
 
   .message {
@@ -35,6 +35,21 @@ app-chat {
     border-width: 0;
     border-radius: 0 0 0 0.5rem;
     min-width: 0;
+    padding-right: 2rem;
+  }
+
+  .counter {
+    position: absolute;
+    top: 50%;
+    right: 2.5rem;
+    opacity: 1;
+    transform: translateY(-50%);
+    transition: all 0.3s;
+
+    &.hidden {
+      opacity: 0;
+      transform: translateY(0);
+    }
   }
 
   &::before {

@@ -3,9 +3,11 @@
   <input
     #chatInput
     [(ngModel)]="newMessage"
+    (ngModelChange)="onInputChange($event)"
     name="chatInput"
     placeholder="Type your answer here..."
   />
+  <span #counter class="counter hidden"></span>
   <button
     class="btn btn--icon-only btn--no-border"
     id="chat-btn-send"
