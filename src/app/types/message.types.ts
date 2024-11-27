@@ -14,6 +14,13 @@ export enum MessageType {
   HISTORY,
 }
 
+export enum GamePhase {
+  PREPARE,
+  WORD_PICK,
+  DRAW,
+  RESULT,
+}
+
 export type Message = {
   type: MessageType;
   userId?: string;
@@ -32,7 +39,7 @@ export interface InitMessage extends Message {
       language: string;
     };
     gameStatus: {
-      phase: 'lobby' | 'chooseWord' | 'draw' | 'result';
+      phase: GamePhase;
     };
   };
 }
