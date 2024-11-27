@@ -1,0 +1,18 @@
+.toolbar {
+  max-width: 800px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#stroke-options {
+  display: flex;
+  column-gap: 0.5rem;
+  min-width: 300px;
+
+  input[type="color"] {
+    padding: 0 0.15rem;
+    min-height: 2rem;
+  }
+}
