@@ -6,12 +6,47 @@ export enum MessageType {
   INIT,
   JOIN_ROOM,
   LEAVE_ROOM,
+  START_GAME,
+  GAME_STATUS,
   CHAT,
   MOUSE_MOVE,
   DRAW_PATH,
   DRAW_SHAPE,
   CLEAR,
   HISTORY,
+}
+
+export enum GamePhase {
+  PREPARE,
+  WORD_PICK,
+  DRAW,
+  RESULT,
+}
+
+export interface Result {
+  userId: string;
+  points: number;
+}
+
+export interface GameStatus {
+  phase: GamePhase;
+  data?: Record<string, any>;
+}
+
+export interface PreparePhaseStatus extends GameStatus {}
+
+export interface WordPickStatus extends GameStatus {
+  data: { userId?: number; timer?: number };
+}
+export interface DrawStatus extends GameStatus {
+  data: {
+    userId?: number;
+    timer?: number;
+    drawHistory: { [userId: string]: { shape: string; geometry: Geometry }[] };
+  };
+}
+export interface ResultStatus extends GameStatus {
+  data: { results?: Result[] };
 }
 
 export type Message = {
@@ -32,12 +67,18 @@ export interface InitMessage extends Message {
   data: {
     users: User[];
     settings: {};
-    gameStatus: {};
+    gameStatus: GameStatus;
   };
 }
 
 export interface LoginMessage extends Message {
   data: { userName: string; roomCode?: string };
+}
+
+export interface GameStatusMessage extends Message {
+  data: {
+    gameStatus: GameStatus;
+  };
 }
 
 export interface ChatMessage extends Message {
