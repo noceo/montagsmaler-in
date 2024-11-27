@@ -1,9 +1,12 @@
 @import "../../../assets/styles/mixins.scss";
 
-:host {
-  display: block;
-  margin: 20px;
+app-whiteboard {
+  position: relative;
+  border: 0.1rem solid black;
+  border-radius: 0.5rem;
+  overflow: hidden;
 }
+
 .toolbar {
   margin: 2rem 0;
 }
@@ -26,8 +29,6 @@
 
 canvas {
   width: 100%;
-  border: 0.1rem solid black;
-  border-radius: 0.5rem;
   background-color: #fffbef;
 }
 
@@ -37,23 +38,4 @@ canvas {
   top: 0;
   z-index: 1;
   pointer-events: none;
-}
-
-.toolbar {
-  max-width: 800px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-}
-
-#stroke-options {
-  display: flex;
-  column-gap: 0.5rem;
-  min-width: 300px;
-
-  input[type="color"] {
-    padding: 0 0.15rem;
-    min-height: 2rem;
-  }
 }

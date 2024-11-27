@@ -29,13 +29,14 @@ import {
   StrokeWidth,
   ToolbarService,
 } from '../../services/toolbar/toolbar.service';
+import { WhiteboardOverlayComponent } from '../whiteboard-overlay/whiteboard-overlay.component';
 
 @Component({
   selector: 'app-whiteboard',
   templateUrl: './whiteboard.component.html',
   styleUrl: './whiteboard.component.scss',
   encapsulation: ViewEncapsulation.None,
-  imports: [FormsModule],
+  imports: [FormsModule, WhiteboardOverlayComponent],
   standalone: true,
 })
 export class WhiteboardComponent implements OnDestroy {

@@ -1,0 +1,11 @@
+<div>
+  @if (phase === GamePhase.PREPARE) {
+  <p>Prepare what's there to come</p>
+  } @else if (phase === GamePhase.WORD_PICK) {
+  <p>Pick a word</p>
+  } @else if (phase === GamePhase.DRAW) {
+  <p>Draw</p>
+  } @else if (phase === GamePhase.RESULT) {
+  <p>Look at these fantastic results</p>
+  }
+</div>
