@@ -65,6 +65,7 @@ export class MessageHandler {
     if (!roomCode) {
       roomCode = 'testRoom'; // nanoid(10);
     }
+    console.log('Logged in');
     const userId = nanoid(5);
     const user: User = { id: userId, name: userName };
 
