@@ -7,6 +7,7 @@ import {
   LeaveRoomMessage,
   LoginMessage,
   Message,
+  MessageType,
   ShapeData,
 } from '../../types/message.types';
 import { Point } from '../../types/geometry.types';
@@ -39,16 +40,6 @@ export const initSocket = () => {
     ws.on('message', (message: string) => {
       messageHandler.handleMessage(ws, message);
 
-      //   if (message.type === 'login') {
-      //     const loginMessage = message as LoginMessage;
-      //     const roomCode = loginMessage.data.roomCode || 'TestRoom' || nanoid(10);
-      //     const userId = nanoid(10);
-      //     const user: User = {
-      //       id: userId,
-      //       name: loginMessage.data.userName,
-      //     };
-      //     handleLogin(roomCode, user);
-      //     return;
       //   } else if (message.type === 'drawPath') {
       //     const drawPathMessage = message as DrawPathMessage;
       //     if (drawPathMessage.data.pathId in currentPaths) {
@@ -93,8 +84,6 @@ export const initSocket = () => {
       //   } else if (message.type === 'clear') {
       //     drawingHistory[message.userId!] = [];
       //   }
-
-      //   broadcastToRoom(message);
     });
 
     ws.on('close', () => {
@@ -110,81 +99,6 @@ export const initSocket = () => {
       if (client.readyState === WebSocket.OPEN) {
         setTimeout(() => client.send(JSON.stringify(message)), 1000);
       }
-    }
-
-    function broadcastToRoom(message: Message) {
-      console.log('Broadcasting: ', message);
-      const roomCode = clientRoomMap.get(ws);
-      if (!roomCode) return;
-      Object.values(rooms[roomCode].users).forEach((user) => {
-        console.log(user);
-        const client = userClientMap[user.id];
-        if (client !== ws) send(client, message);
-      });
-    }
-
-    function handleLogin(roomCode: string, user: User) {
-      let createdRoom = false;
-      if (!rooms[roomCode]) {
-        rooms[roomCode] = { code: roomCode, users: { [user.id]: user } };
-        console.log(`User ${user.name} created room: ${roomCode}`);
-        createdRoom = true;
-      }
-      userClientMap[user.id] = ws;
-      clientRoomMap.set(ws, roomCode);
-      clientUserMap.set(ws, user.id);
-
-      const connectedUsers = Object.values(rooms[roomCode].users);
-
-      // confirm successful join
-      send(ws, {
-        type: 'joinRoom',
-        data: { roomCode: roomCode, user: user },
-      } as JoinRoomMessage);
-      // send history of room
-      //   send(ws, {
-      //     type: 'init',
-      //     data: { users: currentUsers, drawHistory: drawingHistory },
-      //   });
-      // confirm successful join
-      send(ws, {
-        type: 'init',
-        data: { users: connectedUsers, settings: {}, gameStatus: {} },
-      } as InitMessage);
-
-      if (!createdRoom) {
-        broadcastToRoom({
-          type: 'joinRoom',
-          data: { roomCode: roomCode, user: user },
-        } as JoinRoomMessage);
-        console.log(
-          `$User ${user.name} with ID ${user.id} joined room: ${roomCode}`
-        );
-        console.log(
-          `${
-            Object.keys(rooms[roomCode].users).length
-          } clients connected to room: ${roomCode}`
-        );
-      }
-      console.log();
-    }
-
-    function handleLeaveRoom() {
-      const roomCode = clientRoomMap.get(ws);
-      const userId = clientUserMap.get(ws);
-
-      broadcastToRoom({
-        type: 'leaveRoom',
-        data: { roomCode: roomCode, userId: userId },
-      } as LeaveRoomMessage);
-
-      if (!roomCode || !userId) return;
-      if (rooms[roomCode]) delete rooms[roomCode].users[userId];
-      if (Object.keys(rooms[roomCode].users).length === 0)
-        delete rooms[roomCode];
-      delete userClientMap[userId];
-      clientRoomMap.delete(ws);
-      clientUserMap.delete(ws);
     }
   });
 

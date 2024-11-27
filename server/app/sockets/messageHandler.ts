@@ -4,6 +4,7 @@ import { RoomManager } from './roomManager';
 import { WebSocketManager } from './webSocketManager';
 import {
   ChatMessage,
+  GamePhase,
   InitMessage,
   JoinRoomMessage,
   LoginMessage,
@@ -64,18 +65,12 @@ export class MessageHandler {
     if (!roomCode) {
       roomCode = 'testRoom'; // nanoid(10);
     }
-    const room = this.roomManager.createRoom(roomCode);
     const userId = nanoid(5);
     const user: User = { id: userId, name: userName };
 
+    this.roomManager.createRoom(roomCode);
     this.roomManager.addUserToRoom(roomCode, user);
     this.webSocketManager.addClient(userId, ws, roomCode);
-
-    // Notify the user of a successful login
-    // this.webSocketManager.sendMessageToUser(userId, {
-    //   type: 'loginSuccess',
-    //   data: { roomCode: roomCode, userName: user.name },
-    // } as LoginMessage);
 
     // Notify the room about the new user
     this.webSocketManager.broadcastToRoom(roomCode, {
@@ -87,9 +82,15 @@ export class MessageHandler {
     } as JoinRoomMessage);
 
     const currentUsers = this.roomManager.getUsersInRoom(roomCode);
+
+    // send initial state of the game
     this.webSocketManager.sendMessageToUser(userId, {
       type: MessageType.INIT,
-      data: { users: currentUsers, gameStatus: {}, settings: {} },
+      data: {
+        users: currentUsers,
+        settings: {},
+        gameStatus: { phase: GamePhase.PREPARE },
+      },
     } as InitMessage);
   }
 

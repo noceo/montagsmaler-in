@@ -1,3 +1,4 @@
+import { GamePhase } from '../../types/message.types';
 import { Room } from '../../types/room.types';
 import { User } from '../../types/user.types';
 
@@ -11,7 +12,7 @@ export class RoomManager {
   // Room lifecycle management
   createRoom(roomCode: string): Room {
     if (!this.rooms[roomCode]) {
-      this.rooms[roomCode] = { code: roomCode, users: {} };
+      this.rooms[roomCode] = new Room(roomCode, '');
     }
     return this.rooms[roomCode];
   }
@@ -29,27 +30,30 @@ export class RoomManager {
     const room = this.rooms[roomCode];
     if (!room) return false;
 
-    room.users[user.id] = user;
+    room.addUser(user);
     console.log(room);
     return true;
   }
 
   removeUserFromRoom(roomCode: string, userId: string): boolean {
-    const room = this.rooms[roomCode];
-    if (!room || !room.users[userId]) return false;
+    if (!this.roomExists(roomCode)) return false;
 
-    delete room.users[userId];
+    const room = this.rooms[roomCode];
+    if (!room.userExists(userId)) return false;
+
+    room.removeUser(userId);
 
     // Delete the room if it's empty
-    if (Object.keys(room.users).length === 0) {
+    if (room.getUserCount() === 0) {
       this.deleteRoom(roomCode);
     }
     return true;
   }
 
   getUsersInRoom(roomCode: string): User[] {
+    if (!this.roomExists(roomCode)) return [];
     const room = this.rooms[roomCode];
-    return room ? Object.values(room.users) : [];
+    return room.getUsers();
   }
 
   roomExists(roomCode: string): boolean {
