@@ -4,6 +4,7 @@ import { UserListComponent } from '../../components/user-list/user-list.componen
 import { MessagingService } from '../../services/messaging/messaging.service';
 import { UserService } from '../../services/user/user.service';
 import {
+  GamePhase,
   InitMessage,
   JoinRoomMessage,
   LeaveRoomMessage,
@@ -12,6 +13,7 @@ import {
 import { Subscription } from 'rxjs';
 import { ChatComponent } from '../../components/chat/chat.component';
 import { ToolbarComponent } from '../../components/toolbar/toolbar.component';
+import { GameService } from '../../services/gameStatus/game.service';
 
 @Component({
   selector: 'app-game',
@@ -30,7 +32,8 @@ export class GameComponent implements OnInit, OnDestroy {
 
   constructor(
     private messagingService: MessagingService,
-    private userService: UserService
+    private userService: UserService,
+    private gameService: GameService
   ) {}
 
   ngOnInit() {
@@ -59,6 +62,10 @@ export class GameComponent implements OnInit, OnDestroy {
 
         console.log(`User ${leavingUser.name} left.`);
         this.userService.removeUser(leaveRoomMessage.data.userId);
+      } else if (message.type === MessageType.INIT) {
+        const initMessage = message as InitMessage;
+        this.gameService.setPhase(initMessage.data.gameStatus.phase);
+        // setTimeout(() => this.gameService.setPhase(GamePhase.DRAW));
       }
     });
   }
