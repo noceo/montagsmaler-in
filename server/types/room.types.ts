@@ -1,3 +1,4 @@
+import { Game } from './game.types';
 import { GamePhase, GameStatus } from './message.types';
 import { User } from './user.types';
 
@@ -5,13 +6,11 @@ export class Room {
   private code: string;
   private name: string;
   private users: { [userId: string]: User };
-  private gameStatus: GameStatus;
 
   constructor(code: string, name: string) {
     this.code = code;
     this.name = name;
     this.users = {};
-    this.gameStatus = { phase: GamePhase.PREPARE };
   }
 
   addUser(user: User) {
@@ -41,7 +40,7 @@ export class Room {
     return this.name;
   }
 
-  getGameStatus(): GameStatus {
-    return this.gameStatus;
-  }
+  //   getGameStatus(): GameStatus {
+  //     // return this.game;
+  //   }
 }

@@ -1,15 +1,17 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { DestroyRef, inject, Injectable, OnDestroy } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { Subject, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { Message } from '../../types/message.types';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Injectable({
   providedIn: 'root',
 })
 export class MessagingService implements OnDestroy {
   private messageBus = new Subject<Message>();
-  private subscriptions: Subscription[] = [];
   private socket!: WebSocket;
+
+  readonly messageBus$ = this.messageBus.asObservable();
 
   ngOnDestroy(): void {
     this.disconnect();
@@ -31,12 +33,6 @@ export class MessagingService implements OnDestroy {
 
   onConnection(callback: () => void) {
     this.socket.onopen = callback;
-  }
-
-  subscribe(callback: (message: Message) => void) {
-    const subscription = this.messageBus.subscribe(callback);
-    this.subscriptions.push(subscription);
-    return subscription;
   }
 
   send(message: Message) {

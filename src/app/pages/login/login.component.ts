@@ -1,4 +1,10 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  inject,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonComponent } from '../../components/button/button.component';
 import { MessagingService } from '../../services/messaging/messaging.service';
@@ -11,6 +17,7 @@ import {
 } from '../../types/message.types';
 import { Subscription } from 'rxjs';
 import { faker } from '@faker-js/faker';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-login',
@@ -19,10 +26,10 @@ import { faker } from '@faker-js/faker';
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
-export class LoginComponent implements OnInit, OnDestroy {
-  private messagingSubscription!: Subscription;
+export class LoginComponent implements OnInit {
   private roomCode = '';
   username = '';
+  private destroyRef = inject(DestroyRef);
 
   constructor(
     private messagingService: MessagingService,
@@ -33,25 +40,29 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     // chek if there is a roomCode included as a url param
-    this.route.queryParams.subscribe((params) => {
-      if (Object.hasOwn(params, 'r')) this.roomCode = params['r'];
-    });
+    this.route.queryParams
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        if (Object.hasOwn(params, 'r')) this.roomCode = params['r'];
+      });
 
-    this.messagingSubscription = this.messagingService.subscribe((message) => {
-      // if the server acknowledges that the client has joined
-      console.log(message);
-      if (message.type === MessageType.JOIN_ROOM) {
-        const joinRoomMessage = message as JoinRoomMessage;
+    this.messagingService.messageBus$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((message) => {
+        // if the server acknowledges that the client has joined
+        console.log(message);
+        if (message.type === MessageType.JOIN_ROOM) {
+          const joinRoomMessage = message as JoinRoomMessage;
 
-        this.userService.setCurrentUser({
-          id: joinRoomMessage.data.user.id,
-          name: joinRoomMessage.data.user.name,
-        });
-        this.roomCode = joinRoomMessage.data.roomCode;
-        this.router.navigate(['/room']);
-        console.log(`Successfully joined room: ${this.roomCode}`);
-      }
-    });
+          this.userService.setCurrentUser({
+            id: joinRoomMessage.data.user.id,
+            name: joinRoomMessage.data.user.name,
+          });
+          this.roomCode = joinRoomMessage.data.roomCode;
+          this.router.navigate(['/room']);
+          console.log(`Successfully joined room: ${this.roomCode}`);
+        }
+      });
 
     this.messagingService.connect();
     this.messagingService.onConnection(() => {
@@ -60,10 +71,6 @@ export class LoginComponent implements OnInit, OnDestroy {
         data: { userName: faker.internet.username(), roomCode: 'test' },
       } as LoginMessage);
     });
-  }
-
-  ngOnDestroy(): void {
-    this.messagingSubscription.unsubscribe();
   }
 
   onLogin(event: Event) {

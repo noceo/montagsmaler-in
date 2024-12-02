@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MessagingService } from './services/messaging/messaging.service';
 import { UserService } from './services/user/user.service';
 import { InitMessage, MessageType } from './types/message.types';
+import { User } from './types/user.types';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-root',
@@ -13,6 +15,8 @@ import { InitMessage, MessageType } from './types/message.types';
 })
 export class AppComponent implements OnInit {
   title = 'montagsmaler-in';
+  private currentUser?: User | null;
+  private destroyRef = inject(DestroyRef);
 
   constructor(
     private messagingService: MessagingService,
@@ -20,13 +24,21 @@ export class AppComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.messagingService.subscribe((message) => {
-      if (message.type === MessageType.INIT) {
-        const otherUsers = (message as InitMessage).data.users.filter(
-          (user) => user.id !== this.userService.getCurrentUser()?.id
-        );
-        this.userService.addUsers(otherUsers);
-      }
-    });
+    this.userService.currentUser$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((currentUser) => {
+        this.currentUser = currentUser;
+      });
+
+    this.messagingService.messageBus$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((message) => {
+        if (message.type === MessageType.INIT) {
+          const otherUsers = (message as InitMessage).data.users.filter(
+            (user) => user.id !== this.currentUser?.id
+          );
+          this.userService.addUsers(otherUsers);
+        }
+      });
   }
 }

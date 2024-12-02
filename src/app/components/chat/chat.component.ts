@@ -1,6 +1,10 @@
 import {
   Component,
+  DestroyRef,
   ElementRef,
+  inject,
+  OnDestroy,
+  OnInit,
   ViewChild,
   ViewEncapsulation,
 } from '@angular/core';
@@ -9,6 +13,9 @@ import { SvgIconComponent } from 'angular-svg-icon';
 import { UserService } from '../../services/user/user.service';
 import { MessagingService } from '../../services/messaging/messaging.service';
 import { ChatMessage, MessageType } from '../../types/message.types';
+import { Subject, takeUntil } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { User } from '../../types/user.types';
 
 @Component({
   selector: 'app-chat',
@@ -18,33 +25,44 @@ import { ChatMessage, MessageType } from '../../types/message.types';
   styleUrl: './chat.component.scss',
   encapsulation: ViewEncapsulation.None,
 })
-export class ChatComponent {
+export class ChatComponent implements OnInit {
   @ViewChild('chatArea') chatAreaRef!: ElementRef<HTMLElement>;
   @ViewChild('chatInput') chatInputRef!: ElementRef<HTMLElement>;
   @ViewChild('counter') counterRef!: ElementRef<HTMLElement>;
   newMessage = '';
+  private currentUser?: User | null;
+  private destroyRef = inject(DestroyRef);
 
   constructor(
     private userService: UserService,
     private messagingService: MessagingService
   ) {}
 
-  ngAfterViewInit() {
+  ngOnInit(): void {
+    this.userService.currentUser$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((currentUser) => {
+        this.currentUser = currentUser;
+      });
+  }
+
+  ngAfterViewInit(): void {
     this.chatInputRef.nativeElement.addEventListener('keypress', (event) => {
       if (event.key !== 'Enter') return;
       this.onSend();
     });
 
-    this.messagingService.subscribe((message) => {
-      if (message.type !== MessageType.CHAT) return;
-      const chatMessage = message as ChatMessage;
-      const currentUser = this.userService.getCurrentUser()!;
-      const user = this.userService.getUserById(chatMessage.userId);
-      if (!user && currentUser.id !== chatMessage.userId) return;
+    this.messagingService.messageBus$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((message) => {
+        if (message.type !== MessageType.CHAT) return;
+        const chatMessage = message as ChatMessage;
+        const user = this.userService.getUserById(chatMessage.userId);
+        if (!this.currentUser || !user) return;
 
-      const username = user?.name || 'You';
-      this.addMessageToChatArea(username, chatMessage.data.text);
-    });
+        const username = this.currentUser.id === user.id ? 'You' : user.name;
+        this.addMessageToChatArea(username, chatMessage.data.text);
+      });
   }
 
   onInputChange(value: string) {
@@ -54,12 +72,11 @@ export class ChatComponent {
   }
 
   onSend() {
-    const currentUser = this.userService.getCurrentUser();
-    if (!this.newMessage || !currentUser) return;
+    if (!this.newMessage || !this.currentUser) return;
 
     this.messagingService.send({
       type: MessageType.CHAT,
-      userId: currentUser.id,
+      userId: this.currentUser.id,
       data: {
         text: this.newMessage,
       },

@@ -5,6 +5,8 @@ import {
   ElementRef,
   OnDestroy,
   ViewEncapsulation,
+  DestroyRef,
+  inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RadioGroupComponent } from '../radio-group/radio-group.component';
@@ -30,6 +32,7 @@ import {
   ToolbarService,
 } from '../../services/toolbar/toolbar.service';
 import { WhiteboardOverlayComponent } from '../whiteboard-overlay/whiteboard-overlay.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-whiteboard',
@@ -39,10 +42,11 @@ import { WhiteboardOverlayComponent } from '../whiteboard-overlay/whiteboard-ove
   imports: [FormsModule, WhiteboardOverlayComponent],
   standalone: true,
 })
-export class WhiteboardComponent implements OnDestroy {
+export class WhiteboardComponent {
   @ViewChild('canvasContainer') canvasContainerRef!: ElementRef<HTMLElement>;
   @ViewChild('canvasBase') canvasBaseRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('canvasPreview') canvasPreviewRef!: ElementRef<HTMLCanvasElement>;
+  private destroyRef = inject(DestroyRef);
   private contextBase!: CanvasRenderingContext2D;
   private contextPreview!: CanvasRenderingContext2D;
   private isDrawing = false;
@@ -80,8 +84,6 @@ export class WhiteboardComponent implements OnDestroy {
   userId = '';
   userName = faker.internet.username();
 
-  private messagingServiceSubscription!: Subscription;
-
   constructor(
     private userService: UserService,
     private canvasService: CanvasService,
@@ -91,8 +93,9 @@ export class WhiteboardComponent implements OnDestroy {
 
   ngAfterViewInit() {
     // set up message handlers
-    this.messagingServiceSubscription = this.messagingService.subscribe(
-      (message) => {
+    this.messagingService.messageBus$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((message) => {
         if (message.type === MessageType.JOIN_ROOM) {
           this.canvasService.addCanvasLayer(
             (message as JoinRoomMessage).data.user.id,
@@ -132,8 +135,7 @@ export class WhiteboardComponent implements OnDestroy {
             }
           }
         }
-      }
-    );
+      });
 
     // set up two canvas with contexts
     const canvasBase = this.canvasBaseRef.nativeElement;
@@ -179,10 +181,6 @@ export class WhiteboardComponent implements OnDestroy {
       this.contextBase.strokeStyle = color;
       this.contextPreview.strokeStyle = this.getPreviewColor(color);
     });
-  }
-
-  ngOnDestroy() {
-    this.messagingServiceSubscription.unsubscribe();
   }
 
   onMouseDown(event: MouseEvent) {

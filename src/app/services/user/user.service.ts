@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { User } from '../../types/user.types';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 
 export interface UserMap {
   [userId: string]: User;
@@ -11,11 +11,13 @@ export interface UserMap {
 })
 export class UserService {
   private users = new BehaviorSubject<UserMap>({});
-  private currentUser?: User;
+  private currentUser = new BehaviorSubject<User | null>(null);
 
-  readonly users$: Observable<UserMap> = this.users.asObservable();
+  readonly users$ = this.users.asObservable();
+  readonly currentUser$ = this.currentUser.asObservable();
 
   addUser(user: User) {
+    console.log('Add new user: ', user);
     this.users.next({
       ...this.users.value,
       [user.id]: user,
@@ -42,14 +44,12 @@ export class UserService {
   }
 
   getUserById(id: string): User | undefined {
-    return this.users.value[id];
+    return this.currentUser.value?.id === id
+      ? this.currentUser.value
+      : this.users.value[id];
   }
 
-  getCurrentUser(): User | undefined {
-    return this.currentUser;
-  }
-
-  setCurrentUser(user?: User) {
-    this.currentUser = user;
+  setCurrentUser(user: User | null) {
+    this.currentUser.next(user);
   }
 }

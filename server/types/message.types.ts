@@ -36,7 +36,7 @@ export interface GameStatus {
 export interface PreparePhaseStatus extends GameStatus {}
 
 export interface WordPickStatus extends GameStatus {
-  data: { userId?: number; timer?: number };
+  data: { userId: string; choices: string[]; timer: number };
 }
 export interface DrawStatus extends GameStatus {
   data: {

@@ -5,6 +5,7 @@ import { WebSocketManager } from './webSocketManager';
 import {
   ChatMessage,
   GamePhase,
+  GameStatusMessage,
   InitMessage,
   JoinRoomMessage,
   LoginMessage,
@@ -12,6 +13,7 @@ import {
   MessageType,
 } from '../../types/message.types';
 import { nanoid } from 'nanoid';
+import { Game } from '../../types/game.types';
 
 export class MessageHandler {
   private roomManager: RoomManager;
@@ -43,6 +45,9 @@ export class MessageHandler {
         // case 'leaveRoom':
         //   this.handleLeaveRoom(userId, roomCode, ws);
         //   break;
+        case MessageType.START_GAME:
+          this.handleStartGame(ws);
+          break;
         case MessageType.CHAT:
           const chatMessage = msg as ChatMessage;
           console.log(chatMessage);
@@ -65,7 +70,6 @@ export class MessageHandler {
     if (!roomCode) {
       roomCode = 'testRoom'; // nanoid(10);
     }
-    console.log('Logged in');
     const userId = nanoid(5);
     const user: User = { id: userId, name: userName };
 
@@ -93,6 +97,15 @@ export class MessageHandler {
         gameStatus: { phase: GamePhase.PREPARE },
       },
     } as InitMessage);
+
+    // setTimeout(() => {
+    //   this.webSocketManager.broadcastToRoom(roomCode, {
+    //     type: MessageType.GAME_STATUS,
+    //     data: {
+    //       gameStatus: { phase: GamePhase.DRAW },
+    //     },
+    //   } as GameStatusMessage);
+    // }, 2000);
   }
 
   // Handle user leaving a room
@@ -114,6 +127,14 @@ export class MessageHandler {
     }
 
     this.webSocketManager.removeClient(ws);
+  }
+
+  private handleStartGame(ws: WebSocket) {
+    const roomCode = this.webSocketManager.getRoomCode(ws);
+    if (!roomCode) return;
+    const currentUsers = this.roomManager.getUsersInRoom(roomCode);
+    const game = new Game(this.webSocketManager, roomCode, currentUsers, 3);
+    game.start();
   }
 
   private handleChatMessage(ws: WebSocket, message: ChatMessage) {

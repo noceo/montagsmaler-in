@@ -7,4 +7,29 @@
   background-color: sandybrown;
   border-radius: 0.5rem;
   z-index: 1;
+
+  > * {
+    height: 100%;
+  }
+}
+
+.prepare-options {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.word-pick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &__prompt {
+    text-align: center;
+  }
+
+  &__choices {
+    display: flex;
+    column-gap: 2rem;
+  }
 }
