@@ -33,13 +33,14 @@ import {
 } from '../../services/toolbar/toolbar.service';
 import { WhiteboardOverlayComponent } from '../whiteboard-overlay/whiteboard-overlay.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-whiteboard',
   templateUrl: './whiteboard.component.html',
   styleUrl: './whiteboard.component.scss',
   encapsulation: ViewEncapsulation.None,
-  imports: [FormsModule, WhiteboardOverlayComponent],
+  imports: [CommonModule, FormsModule, WhiteboardOverlayComponent],
   standalone: true,
 })
 export class WhiteboardComponent {

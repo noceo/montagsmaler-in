@@ -1,28 +1,31 @@
-@if (phase === GamePhase.PREPARE) {
-<div class="prepare-options">
-  <app-button (onClick)="onStartGame()">Play</app-button>
-</div>
-} @else if (phase === GamePhase.WORD_PICK) {
-<div class="word-pick">
-  @if (isMyTurn$ | async) {
-  <div class="word-pick__choices">
-    @for (choice of choices; track choice) {
-    <app-button (onClick)="onWordPick($event)">{{ choice }}</app-button>
+<div
+  class="whiteboard-overlay"
+  [ngClass]="{ 'whiteboard-overlay--hidden': phase === GamePhase.DRAW }"
+>
+  @if (phase === GamePhase.PREPARE) {
+  <div class="prepare-options">
+    <app-button (onClick)="onStartGame()">Play</app-button>
+  </div>
+  } @else if (phase === GamePhase.WORD_PICK) {
+  <div class="word-pick">
+    @if (isMyTurn$ | async) {
+    <div class="word-pick__choices">
+      @for (choice of choices; track choice) {
+      <app-button (onClick)="onWordPick($event)">{{ choice }}</app-button>
+      }
+    </div>
+    } @else {
+    <p class="word-pick__prompt">
+      {{ activeUser?.name }}<br />
+      is choosing a word!
+    </p>
     }
   </div>
-  } @else {
-  <p class="word-pick__prompt">
-    {{ activeUser?.name }}<br />
-    is choosing a word!
-  </p>
+  } @else if (phase === GamePhase.RESULT) {
+  <p>Look at these fantastic results</p>
+  } @if (isMyTurn$ | async; as isMyTurn) {
+  <div>
+    {{ isMyTurn$ | async }}
+  </div>
   }
 </div>
-} @else if (phase === GamePhase.DRAW) {
-<p>Draw</p>
-} @else if (phase === GamePhase.RESULT) {
-<p>Look at these fantastic results</p>
-} @if (isMyTurn$ | async; as isMyTurn) {
-<div>
-  {{ isMyTurn$ | async }}
-</div>
-}

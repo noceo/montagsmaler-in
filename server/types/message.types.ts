@@ -40,8 +40,8 @@ export interface WordPickStatus extends GameStatus {
 }
 export interface DrawStatus extends GameStatus {
   data: {
-    userId?: number;
-    timer?: number;
+    userId: string;
+    timer: number;
     drawHistory: { [userId: string]: { shape: string; geometry: Geometry }[] };
   };
 }

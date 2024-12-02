@@ -1,5 +1,6 @@
 import { WebSocketManager } from '../app/sockets/webSocketManager';
 import {
+  DrawStatus,
   GamePhase,
   GameStatusMessage,
   MessageType,
@@ -21,7 +22,7 @@ export class Game {
   private currentRound = 1;
   private rounds;
   private wordChoices: string[];
-  private webSocketManager?: WebSocketManager;
+  private webSocketManager: WebSocketManager;
   private roomCode: string;
   private timer: number;
   private currentTimeout?: NodeJS.Timeout;
@@ -96,7 +97,8 @@ export class Game {
 
   private wordPickPhase(activeUser: User): Promise<void> {
     this.phase = GamePhase.WORD_PICK;
-    this.webSocketManager?.broadcastToRoom(this.roomCode, {
+    const duration = PHASE_DURATIONS[GamePhase.WORD_PICK];
+    this.webSocketManager.broadcastToRoom(this.roomCode, {
       type: MessageType.GAME_STATUS,
       data: {
         gameStatus: {
@@ -104,12 +106,11 @@ export class Game {
           data: {
             userId: activeUser.id,
             choices: ['test1', 'test2', 'test3'],
-            timer: 80,
+            timer: duration,
           },
         } as WordPickStatus,
       },
     } as GameStatusMessage);
-    const duration = PHASE_DURATIONS[GamePhase.WORD_PICK];
     console.log(`Phase: ${this.phase}`);
     console.log(duration);
     return new Promise((resolve, _reject) => {
@@ -120,6 +121,19 @@ export class Game {
   private drawPhase(activeUser: User): Promise<void> {
     this.phase = GamePhase.DRAW;
     const duration = PHASE_DURATIONS[GamePhase.DRAW];
+    this.webSocketManager.broadcastToRoom(this.roomCode, {
+      type: MessageType.GAME_STATUS,
+      data: {
+        gameStatus: {
+          phase: GamePhase.DRAW,
+          data: {
+            userId: activeUser.id,
+            drawHistory: {},
+            timer: duration,
+          },
+        } as DrawStatus,
+      },
+    } as GameStatusMessage);
     console.log(`Phase: ${this.phase}`);
     console.log(duration);
     return new Promise((resolve, _reject) => {

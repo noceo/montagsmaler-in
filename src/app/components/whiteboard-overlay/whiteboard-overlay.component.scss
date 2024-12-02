@@ -4,13 +4,22 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: sandybrown;
   border-radius: 0.5rem;
   z-index: 1;
+}
 
-  > * {
-    height: 100%;
+.whiteboard-overlay {
+  background-color: sandybrown;
+  transition: transform 0.5s ease-in-out;
+
+  &--hidden {
+    transform: translateY(-100%);
   }
+}
+
+.whiteboard-overlay,
+.whiteboard-overlay > * {
+  height: 100%;
 }
 
 .prepare-options {

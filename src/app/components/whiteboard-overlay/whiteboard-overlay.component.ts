@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, Input, OnInit } from '@angular/core';
 import { GamePhase, MessageType } from '../../types/message.types';
 import { GameService } from '../../services/gameStatus/game.service';
 import { ButtonComponent } from '../button/button.component';
