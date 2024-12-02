@@ -1,6 +1,6 @@
 import { Component, DestroyRef, inject, Input, OnInit } from '@angular/core';
 import { GamePhase, MessageType } from '../../types/message.types';
-import { GameService } from '../../services/gameStatus/game.service';
+import { GameService } from '../../services/game/game.service';
 import { ButtonComponent } from '../button/button.component';
 import { MessagingService } from '../../services/messaging/messaging.service';
 import { User } from '../../types/user.types';

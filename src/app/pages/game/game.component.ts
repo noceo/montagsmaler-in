@@ -21,7 +21,7 @@ import {
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { ChatComponent } from '../../components/chat/chat.component';
 import { ToolbarComponent } from '../../components/toolbar/toolbar.component';
-import { GameService } from '../../services/gameStatus/game.service';
+import { GameService } from '../../services/game/game.service';
 import { User } from '../../types/user.types';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
