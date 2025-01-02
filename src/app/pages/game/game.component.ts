@@ -24,6 +24,7 @@ import { ToolbarComponent } from '../../components/toolbar/toolbar.component';
 import { GameService } from '../../services/game/game.service';
 import { User } from '../../types/user.types';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TimerComponent } from '../../components/timer/timer.component';
 
 @Component({
   selector: 'app-game',
@@ -33,6 +34,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     UserListComponent,
     ChatComponent,
     ToolbarComponent,
+    TimerComponent,
   ],
   templateUrl: './game.component.html',
   styleUrl: './game.component.scss',

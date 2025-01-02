@@ -10,7 +10,7 @@ import { User } from './user.types';
 
 const PHASE_DURATIONS: Record<GamePhase, number> = {
   [GamePhase.PREPARE]: 0,
-  [GamePhase.WORD_PICK]: 2,
+  [GamePhase.WORD_PICK]: 30,
   [GamePhase.DRAW]: 8,
   [GamePhase.RESULT]: 0,
 };

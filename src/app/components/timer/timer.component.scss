@@ -1,0 +1,20 @@
+:host {
+  position: relative;
+}
+
+circle {
+  transition: all 0.3s;
+}
+
+.text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 50%;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
