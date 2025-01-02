@@ -1,11 +1,12 @@
+import { WebSocketManager } from '../app/sockets/webSocketManager';
 import { Game } from './game.types';
-import { GamePhase, GameStatus } from './message.types';
 import { User } from './user.types';
 
 export class Room {
   private code: string;
   private name: string;
   private users: { [userId: string]: User };
+  private game?: Game;
 
   constructor(code: string, name: string) {
     this.code = code;
@@ -40,7 +41,8 @@ export class Room {
     return this.name;
   }
 
-  //   getGameStatus(): GameStatus {
-  //     // return this.game;
-  //   }
+  getGame(wsm: WebSocketManager) {
+    if (!this.game) this.game = new Game(wsm, this.code, this.getUsers(), 3);
+    return this.game;
+  }
 }
