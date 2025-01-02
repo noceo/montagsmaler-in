@@ -21,11 +21,13 @@ export class Game {
   private users: User[];
   private currentRound = 1;
   private rounds;
+  private activeWord: string;
   private wordChoices: string[];
   private webSocketManager: WebSocketManager;
   private roomCode: string;
   private timer: number;
-  private currentTimeout?: NodeJS.Timeout;
+  private currentTimeout: NodeJS.Timeout | null;
+  cancelWordPickPhase?: () => void;
 
   constructor(
     webSocketManager: WebSocketManager,
@@ -34,12 +36,14 @@ export class Game {
     rounds: number
   ) {
     this.phase = GamePhase.PREPARE;
+    this.activeWord = '';
     this.wordChoices = [];
     this.webSocketManager = webSocketManager;
     this.roomCode = roomCode;
     this.users = users;
     this.timer = 0;
     this.rounds = rounds;
+    this.currentTimeout = null;
   }
 
   getPhase(): GamePhase {
@@ -52,6 +56,10 @@ export class Game {
 
   getWordChoices(): string[] {
     return this.wordChoices;
+  }
+
+  setActiveWord(activeWord: string): void {
+    this.activeWord = activeWord;
   }
 
   async start() {
@@ -67,33 +75,6 @@ export class Game {
     }
     this.resultPhase();
   }
-
-  //   private transitonToNextPhase() {
-  //     switch (this.phase) {
-  //       case GamePhase.PREPARE:
-  //         this.wordPickPhase();
-  //         break;
-  //       case GamePhase.WORD_PICK:
-  //         this.drawPhase();
-  //         break;
-  //       case GamePhase.DRAW:
-  //         this.wordPickPhase();
-  //         break;
-  //       default:
-  //         return;
-  //     }
-
-  //     const duration = PHASE_DURATIONS[this.phase];
-  //     console.log(
-  //       `Current Round: ${this.currentRound}\nCurrent phase: ${this.phase}. Moving to next phase in ${duration}s.`
-  //     );
-  //     if (duration) {
-  //       this.currentTimeout = setTimeout(
-  //         () => this.transitonToNextPhase(),
-  //         duration * 1000
-  //       );
-  //     }
-  //   }
 
   private wordPickPhase(activeUser: User): Promise<void> {
     this.phase = GamePhase.WORD_PICK;
@@ -114,7 +95,13 @@ export class Game {
     console.log(`Phase: ${this.phase}`);
     console.log(duration);
     return new Promise((resolve, _reject) => {
-      setTimeout(resolve, duration * 1000);
+      this.currentTimeout = setTimeout(resolve, duration * 1000);
+
+      this.cancelWordPickPhase = () => {
+        clearTimeout(this.currentTimeout!);
+        resolve();
+        console.log('Word Pick Timeout cancelled.');
+      };
     });
   }
 

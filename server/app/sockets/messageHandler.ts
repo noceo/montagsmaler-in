@@ -4,6 +4,7 @@ import { RoomManager } from './roomManager';
 import { WebSocketManager } from './webSocketManager';
 import {
   ChatMessage,
+  ChooseWordMessage,
   GamePhase,
   GameStatusMessage,
   InitMessage,
@@ -47,6 +48,10 @@ export class MessageHandler {
         //   break;
         case MessageType.START_GAME:
           this.handleStartGame(ws);
+          break;
+        case MessageType.CHOOSE_WORD:
+          const chooseWordMessage = msg as ChooseWordMessage;
+          this.handleChooseWord(ws, chooseWordMessage);
           break;
         case MessageType.CHAT:
           const chatMessage = msg as ChatMessage;
@@ -132,9 +137,23 @@ export class MessageHandler {
   private handleStartGame(ws: WebSocket) {
     const roomCode = this.webSocketManager.getRoomCode(ws);
     if (!roomCode) return;
-    const currentUsers = this.roomManager.getUsersInRoom(roomCode);
-    const game = new Game(this.webSocketManager, roomCode, currentUsers, 3);
-    game.start();
+
+    this.roomManager.getRoom(roomCode)?.getGame(this.webSocketManager).start();
+  }
+
+  private handleChooseWord(ws: WebSocket, message: ChooseWordMessage) {
+    const roomCode = this.webSocketManager.getRoomForSocket(ws);
+    if (!roomCode) return;
+
+    const room = this.roomManager.getRoom(roomCode);
+    if (!room) return;
+
+    room.getGame(this.webSocketManager).cancelWordPickPhase!();
+
+    this.webSocketManager.broadcastToRoom(roomCode, {
+      type: MessageType.CHOOSE_WORD,
+      data: message.data,
+    } as ChooseWordMessage);
   }
 
   private handleChatMessage(ws: WebSocket, message: ChatMessage) {

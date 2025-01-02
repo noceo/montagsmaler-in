@@ -1,5 +1,9 @@
 import { Component, DestroyRef, inject, Input, OnInit } from '@angular/core';
-import { GamePhase, MessageType } from '../../types/message.types';
+import {
+  ChooseWordMessage,
+  GamePhase,
+  MessageType,
+} from '../../types/message.types';
 import { GameService } from '../../services/game/game.service';
 import { ButtonComponent } from '../button/button.component';
 import { MessagingService } from '../../services/messaging/messaging.service';
@@ -56,14 +60,27 @@ export class WhiteboardOverlayComponent implements OnInit {
       map(([activeUser, currentUser]) => activeUser?.id === currentUser?.id),
       takeUntilDestroyed(this.destroyRef)
     );
+
+    this.messagingService.messageBus$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((message) => {
+        if (message.type === MessageType.START_GAME) {
+          this.gameService.setPhase(GamePhase.WORD_PICK);
+        }
+      });
   }
 
   onStartGame() {
-    this.gameService.setPhase(GamePhase.WORD_PICK);
     this.messagingService.send({ type: MessageType.START_GAME });
   }
 
   onWordPick(event: Event) {
     console.log('WORD PICK', event.target);
+    const word = (event.target as HTMLButtonElement).innerText;
+    console.log('Picked: ', word);
+    this.messagingService.send({
+      type: MessageType.CHOOSE_WORD,
+      data: { word: word },
+    } as ChooseWordMessage);
   }
 }

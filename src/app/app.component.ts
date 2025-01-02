@@ -97,16 +97,11 @@ export class AppComponent implements OnInit {
     const gameStatusMessage = message as GameStatusMessage;
     this.gameService.setPhase(gameStatusMessage.data.gameStatus.phase);
 
-    if (gameStatusMessage.data.gameStatus.phase === GamePhase.WORD_PICK) {
-      const wordPickStatus = gameStatusMessage.data
-        .gameStatus as WordPickStatus;
-      const activeUser = this.userService.getUserById(
-        wordPickStatus.data.userId
-      );
-      if (!activeUser) return;
-      this.gameService.setActiveUser(activeUser);
-      this.gameService.setWordChoices(wordPickStatus.data.choices);
-      this.gameService.setTimer(wordPickStatus.data.timer);
-    }
+    const wordPickStatus = gameStatusMessage.data.gameStatus as WordPickStatus;
+    const activeUser = this.userService.getUserById(wordPickStatus.data.userId);
+    if (!activeUser) return;
+    this.gameService.setActiveUser(activeUser);
+    this.gameService.setWordChoices(wordPickStatus.data.choices);
+    this.gameService.setTimer(wordPickStatus.data.timer);
   }
 }

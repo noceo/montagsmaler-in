@@ -8,6 +8,7 @@ export enum MessageType {
   LEAVE_ROOM,
   START_GAME,
   GAME_STATUS,
+  CHOOSE_WORD,
   CHAT,
   MOUSE_MOVE,
   DRAW_PATH,
@@ -84,6 +85,12 @@ export interface JoinRoomMessage extends Message {
 
 export interface LeaveRoomMessage extends Message {
   data: { roomCode: string; userId: string };
+}
+
+export interface ChooseWordMessage extends Message {
+  data: {
+    word: string;
+  };
 }
 
 export interface ChatMessage extends Message {

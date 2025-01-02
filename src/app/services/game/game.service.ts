@@ -12,6 +12,7 @@ export class GameService {
   private activeUser = new BehaviorSubject<User | null>(null);
   private totalTime = new Subject<number>();
   private remainingTime = new Subject<number>();
+  private timerIntervalId?: ReturnType<typeof setInterval>;
 
   readonly phase$ = this.phase.asObservable();
   readonly wordChoices$ = this.wordChoices.asObservable();
@@ -32,12 +33,13 @@ export class GameService {
   }
 
   setTimer(timer: number) {
+    if (this.timerIntervalId) clearInterval(this.timerIntervalId);
     let currentTime = timer;
     this.totalTime.next(timer);
     this.remainingTime.next(currentTime--);
-    const intervalId = setInterval(() => {
+    this.timerIntervalId = setInterval(() => {
       if (currentTime >= 0) this.remainingTime.next(currentTime--);
-      else clearInterval(intervalId);
+      else clearInterval(this.timerIntervalId);
     }, 1000);
   }
 }
