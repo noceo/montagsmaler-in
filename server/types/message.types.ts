@@ -67,7 +67,9 @@ export interface LeaveRoomMessage extends Message {
 export interface InitMessage extends Message {
   data: {
     users: User[];
-    settings: {};
+    settings: {
+      maxRounds: number;
+    };
     gameStatus: GameStatus;
   };
 }

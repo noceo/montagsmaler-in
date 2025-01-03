@@ -23,9 +23,5 @@
   </div>
   } @else if (phase === GamePhase.RESULT) {
   <p>Look at these fantastic results</p>
-  } @if (isMyTurn$ | async; as isMyTurn) {
-  <div>
-    {{ isMyTurn$ | async }}
-  </div>
   }
 </div>

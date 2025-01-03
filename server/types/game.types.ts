@@ -10,8 +10,8 @@ import { User } from './user.types';
 
 const PHASE_DURATIONS: Record<GamePhase, number> = {
   [GamePhase.PREPARE]: 0,
-  [GamePhase.WORD_PICK]: 30,
-  [GamePhase.DRAW]: 8,
+  [GamePhase.WORD_PICK]: 3,
+  [GamePhase.DRAW]: 3,
   [GamePhase.RESULT]: 0,
 };
 
@@ -19,8 +19,8 @@ export class Game {
   private phase: GamePhase;
   private activeUser?: User;
   private users: User[];
-  private currentRound = 1;
-  private rounds;
+  private currentRound: number;
+  private maxRounds: number;
   private activeWord: string;
   private wordChoices: string[];
   private webSocketManager: WebSocketManager;
@@ -33,7 +33,7 @@ export class Game {
     webSocketManager: WebSocketManager,
     roomCode: string,
     users: User[],
-    rounds: number
+    maxRounds: number
   ) {
     this.phase = GamePhase.PREPARE;
     this.activeWord = '';
@@ -42,7 +42,8 @@ export class Game {
     this.roomCode = roomCode;
     this.users = users;
     this.timer = 0;
-    this.rounds = rounds;
+    this.currentRound = 1;
+    this.maxRounds = maxRounds;
     this.currentTimeout = null;
   }
 
@@ -63,7 +64,7 @@ export class Game {
   }
 
   async start() {
-    for (let i = 0; i < this.rounds; i++) {
+    for (let i = 0; i < this.maxRounds; i++) {
       this.currentRound = i + 1;
       console.log(`Round: ${this.currentRound}`);
       for (const user of this.users) {
@@ -88,6 +89,7 @@ export class Game {
             userId: activeUser.id,
             choices: ['test1', 'test2', 'test3'],
             timer: duration,
+            currentRound: this.currentRound,
           },
         } as WordPickStatus,
       },
@@ -117,6 +119,7 @@ export class Game {
             userId: activeUser.id,
             drawHistory: {},
             timer: duration,
+            currentRound: this.currentRound,
           },
         } as DrawStatus,
       },

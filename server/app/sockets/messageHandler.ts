@@ -98,7 +98,9 @@ export class MessageHandler {
       type: MessageType.INIT,
       data: {
         users: currentUsers,
-        settings: {},
+        settings: {
+          maxRounds: 3,
+        },
         gameStatus: { phase: GamePhase.PREPARE },
       },
     } as InitMessage);

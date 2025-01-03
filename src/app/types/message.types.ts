@@ -37,15 +37,23 @@ export interface GameStatus {
 export interface PreparePhaseStatus extends GameStatus {}
 
 export interface WordPickStatus extends GameStatus {
-  data: { userId: string; choices: string[]; timer: number };
+  data: {
+    userId: string;
+    timer: number;
+    currentRound: number;
+    choices: string[];
+  };
 }
+
 export interface DrawStatus extends GameStatus {
   data: {
-    userId?: number;
-    timer?: number;
+    userId: string;
+    timer: number;
+    currentRound: number;
     drawHistory: { [userId: string]: { shape: string; geometry: Geometry }[] };
   };
 }
+
 export interface ResultStatus extends GameStatus {
   data: { results?: Result[] };
 }
@@ -64,6 +72,7 @@ export interface InitMessage extends Message {
   data: {
     users: User[];
     settings: {
+      maxRounds: number;
       userCount: number;
       language: string;
     };
