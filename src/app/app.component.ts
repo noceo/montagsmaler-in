@@ -3,6 +3,7 @@ import { Router, RouterOutlet } from '@angular/router';
 import { UserService } from './services/user/user.service';
 import { GameService } from './services/game/game.service';
 import {
+  DrawStatus,
   GamePhase,
   GameStatusMessage,
   InitMessage,
@@ -30,15 +31,12 @@ export class AppComponent implements OnInit {
   > = {
     [MessageType.JOIN_ROOM]: (message) => this.handleJoinRoom(message),
     [MessageType.LEAVE_ROOM]: (message) => this.handleLeaveRoom(message),
-    [MessageType.GAME_STATUS]: (message) => this.handleGameStatus(message),
-    [MessageType.INIT]: (message) => this.handleInit(message),
   };
   private destroyRef = inject(DestroyRef);
   title = 'montagsmaler-in';
 
   constructor(
     private userService: UserService,
-    private gameService: GameService,
     private messagingService: MessagingService,
     private router: Router
   ) {}
@@ -72,6 +70,7 @@ export class AppComponent implements OnInit {
     console.log(`User ${(message as JoinRoomMessage).data.user.name} joined.`);
     this.userService.addUser((message as JoinRoomMessage).data.user);
   }
+
   private handleLeaveRoom(message: Message) {
     const leaveRoomMessage = message as LeaveRoomMessage;
     const leavingUser = this.userService.getUserById(
@@ -81,43 +80,5 @@ export class AppComponent implements OnInit {
 
     console.log(`User ${leavingUser.name} left.`);
     this.userService.removeUser(leaveRoomMessage.data.userId);
-  }
-
-  private handleInit(message: Message) {
-    const initMessage = message as InitMessage;
-    this.gameService.setPhase(initMessage.data.gameStatus.phase);
-    const otherUsers = (message as InitMessage).data.users.filter(
-      (user) => user.id !== this.currentUser?.id
-    );
-    this.userService.addUsers(otherUsers);
-    this.gameService.setMaxRounds(initMessage.data.settings.maxRounds);
-    // setTimeout(() => this.gameService.setPhase(GamePhase.DRAW));
-  }
-
-  private handleGameStatus(message: Message) {
-    const gameStatusMessage = message as GameStatusMessage;
-    this.gameService.setPhase(gameStatusMessage.data.gameStatus.phase);
-
-    if (gameStatusMessage.data.gameStatus.phase === GamePhase.WORD_PICK) {
-      const wordPickStatus = gameStatusMessage.data
-        .gameStatus as WordPickStatus;
-      const activeUser = this.userService.getUserById(
-        wordPickStatus.data.userId
-      );
-      if (!activeUser) return;
-      this.gameService.setActiveUser(activeUser);
-      this.gameService.setWordChoices(wordPickStatus.data.choices);
-      this.gameService.setTimer(wordPickStatus.data.timer);
-      this.gameService.setCurrentRound(wordPickStatus.data.currentRound);
-    } else if (gameStatusMessage.data.gameStatus.phase === GamePhase.DRAW) {
-      const wordPickStatus = gameStatusMessage.data
-        .gameStatus as WordPickStatus;
-      const activeUser = this.userService.getUserById(
-        wordPickStatus.data.userId
-      );
-      if (!activeUser) return;
-      this.gameService.setActiveUser(activeUser);
-      this.gameService.setTimer(wordPickStatus.data.timer);
-    }
   }
 }

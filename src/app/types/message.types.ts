@@ -9,6 +9,7 @@ export enum MessageType {
   START_GAME,
   GAME_STATUS,
   CHOOSE_WORD,
+  REVEAL_LETTER,
   CHAT,
   MOUSE_MOVE,
   DRAW_PATH,
@@ -50,6 +51,7 @@ export interface DrawStatus extends GameStatus {
     userId: string;
     timer: number;
     currentRound: number;
+    chosenWord: string;
     drawHistory: { [userId: string]: { shape: string; geometry: Geometry }[] };
   };
 }
@@ -99,6 +101,13 @@ export interface LeaveRoomMessage extends Message {
 export interface ChooseWordMessage extends Message {
   data: {
     word: string;
+  };
+}
+
+export interface RevealLetterMessage extends Message {
+  data: {
+    index: number;
+    letter: string;
   };
 }
 

@@ -1,0 +1,7 @@
+<p>
+  @for (char of revealedLetters; track $index) {
+  <span class="letter" [ngClass]="{ hidden: char === '_' }">{{
+    char === "_" ? "" : char
+  }}</span>
+  }
+</p>

@@ -1,0 +1,18 @@
+.letter {
+  position: relative;
+  display: inline-block;
+  width: 0.75rem;
+  text-align: center;
+
+  &.hidden {
+    &::after {
+      content: "";
+      position: absolute;
+      width: 80%;
+      height: 0.1rem;
+      bottom: -0.1rem;
+      left: 10%;
+      background-color: black;
+    }
+  }
+}

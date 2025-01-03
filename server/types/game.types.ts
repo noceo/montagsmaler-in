@@ -4,6 +4,7 @@ import {
   GamePhase,
   GameStatusMessage,
   MessageType,
+  RevealLetterMessage,
   WordPickStatus,
 } from './message.types';
 import { User } from './user.types';
@@ -11,7 +12,7 @@ import { User } from './user.types';
 const PHASE_DURATIONS: Record<GamePhase, number> = {
   [GamePhase.PREPARE]: 0,
   [GamePhase.WORD_PICK]: 3,
-  [GamePhase.DRAW]: 3,
+  [GamePhase.DRAW]: 50,
   [GamePhase.RESULT]: 0,
 };
 
@@ -21,12 +22,13 @@ export class Game {
   private users: User[];
   private currentRound: number;
   private maxRounds: number;
-  private activeWord: string;
+  private chosenWord: string;
   private wordChoices: string[];
   private webSocketManager: WebSocketManager;
   private roomCode: string;
   private timer: number;
   private currentTimeout: NodeJS.Timeout | null;
+  private revealInterval: NodeJS.Timeout | null;
   cancelWordPickPhase?: () => void;
 
   constructor(
@@ -36,8 +38,8 @@ export class Game {
     maxRounds: number
   ) {
     this.phase = GamePhase.PREPARE;
-    this.activeWord = '';
-    this.wordChoices = [];
+    this.chosenWord = '';
+    this.wordChoices = ['test1', 'test2', 'test3'];
     this.webSocketManager = webSocketManager;
     this.roomCode = roomCode;
     this.users = users;
@@ -45,6 +47,7 @@ export class Game {
     this.currentRound = 1;
     this.maxRounds = maxRounds;
     this.currentTimeout = null;
+    this.revealInterval = null;
   }
 
   getPhase(): GamePhase {
@@ -59,8 +62,8 @@ export class Game {
     return this.wordChoices;
   }
 
-  setActiveWord(activeWord: string): void {
-    this.activeWord = activeWord;
+  setChosenWord(chosenWord: string): void {
+    this.chosenWord = chosenWord;
   }
 
   async start() {
@@ -87,7 +90,7 @@ export class Game {
           phase: GamePhase.WORD_PICK,
           data: {
             userId: activeUser.id,
-            choices: ['test1', 'test2', 'test3'],
+            choices: this.wordChoices,
             timer: duration,
             currentRound: this.currentRound,
           },
@@ -97,7 +100,10 @@ export class Game {
     console.log(`Phase: ${this.phase}`);
     console.log(duration);
     return new Promise((resolve, _reject) => {
-      this.currentTimeout = setTimeout(resolve, duration * 1000);
+      this.currentTimeout = setTimeout(() => {
+        this.chosenWord = this.wordChoices[Math.floor(Math.random() * 3)];
+        resolve();
+      }, duration * 1000);
 
       this.cancelWordPickPhase = () => {
         clearTimeout(this.currentTimeout!);
@@ -110,6 +116,8 @@ export class Game {
   private drawPhase(activeUser: User): Promise<void> {
     this.phase = GamePhase.DRAW;
     const duration = PHASE_DURATIONS[GamePhase.DRAW];
+    console.log(this.chosenWord);
+
     this.webSocketManager.broadcastToRoom(this.roomCode, {
       type: MessageType.GAME_STATUS,
       data: {
@@ -120,14 +128,48 @@ export class Game {
             drawHistory: {},
             timer: duration,
             currentRound: this.currentRound,
+            chosenWord: this.chosenWord,
           },
         } as DrawStatus,
       },
     } as GameStatusMessage);
     console.log(`Phase: ${this.phase}`);
     console.log(duration);
+
+    // set interval for revealing random letters
+    const chosenWord = this.chosenWord;
+    const revealInterval = Math.floor(duration / chosenWord.length);
+    const randomIndices = Array.from(
+      { length: chosenWord.length },
+      (_, i) => i
+    );
+    for (let i = randomIndices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [randomIndices[i], randomIndices[j]] = [
+        randomIndices[j],
+        randomIndices[i],
+      ];
+    }
+    let i = 0;
+    console.log(randomIndices, revealInterval, duration, chosenWord.length);
+
+    this.revealInterval = setInterval(() => {
+      const randIndex = randomIndices[i];
+      this.webSocketManager.broadcastToRoom(this.roomCode, {
+        type: MessageType.REVEAL_LETTER,
+        data: {
+          index: randIndex,
+          letter: this.chosenWord[randIndex],
+        },
+      } as RevealLetterMessage);
+      i++;
+    }, revealInterval * 1000);
+
     return new Promise((resolve, _reject) => {
-      setTimeout(resolve, duration * 1000);
+      setTimeout(() => {
+        clearInterval(this.revealInterval!);
+        resolve();
+      }, duration * 1000);
     });
   }
 

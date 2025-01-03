@@ -150,7 +150,9 @@ export class MessageHandler {
     const room = this.roomManager.getRoom(roomCode);
     if (!room) return;
 
-    room.getGame(this.webSocketManager).cancelWordPickPhase!();
+    const game = room.getGame(this.webSocketManager);
+    game.setChosenWord(message.data.word);
+    game.cancelWordPickPhase!();
 
     this.webSocketManager.broadcastToRoom(roomCode, {
       type: MessageType.CHOOSE_WORD,
