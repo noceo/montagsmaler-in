@@ -11,6 +11,7 @@ export enum MessageType {
   CHOOSE_WORD,
   REVEAL_LETTER,
   CHAT,
+  GUESS,
   MOUSE_MOVE,
   DRAW_PATH,
   DRAW_SHAPE,
@@ -115,6 +116,16 @@ export interface ChatMessage extends Message {
   userId: string;
   data: {
     text: string;
+    isCorrect?: boolean;
+    isPartlyCorrect?: boolean;
+  };
+}
+
+export interface GuessMessage extends Message {
+  userId: string;
+  data: {
+    isCorrect: boolean;
+    isPartlyCorrect: boolean;
   };
 }
 

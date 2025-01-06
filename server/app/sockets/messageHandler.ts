@@ -7,6 +7,7 @@ import {
   ChooseWordMessage,
   GamePhase,
   GameStatusMessage,
+  GuessMessage,
   InitMessage,
   JoinRoomMessage,
   LoginMessage,
@@ -163,6 +164,25 @@ export class MessageHandler {
   private handleChatMessage(ws: WebSocket, message: ChatMessage) {
     const roomCode = this.webSocketManager.getRoomForSocket(ws);
     if (!roomCode) return;
+
+    const room = this.roomManager.getRoom(roomCode);
+    if (!room) return;
+
+    const game = room.getGame(this.webSocketManager);
+    const gamePhase = game.getPhase();
+    if (
+      gamePhase === GamePhase.DRAW &&
+      game.isGuessCorrect(message.data.text)
+    ) {
+      this.webSocketManager.broadcastToRoom(roomCode, {
+        type: MessageType.GUESS,
+        userId: message.userId,
+        data: {
+          isCorrect: true,
+        },
+      } as GuessMessage);
+      return;
+    }
 
     this.webSocketManager.broadcastToRoom(roomCode, {
       type: MessageType.CHAT,

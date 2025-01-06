@@ -62,8 +62,16 @@ export class Game {
     return this.wordChoices;
   }
 
+  getChosenWord(): string {
+    return this.chosenWord;
+  }
+
   setChosenWord(chosenWord: string): void {
     this.chosenWord = chosenWord;
+  }
+
+  isGuessCorrect(guess: string): boolean {
+    return guess === this.chosenWord;
   }
 
   async start() {

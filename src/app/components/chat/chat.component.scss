@@ -22,6 +22,18 @@ app-chat {
     &:nth-child(even) {
       background-color: rgb(224, 224, 224);
     }
+
+    &.success {
+      color: #00a000;
+    }
+
+    &.warning {
+      color: #eab200;
+    }
+
+    &.error {
+      color: #e80000;
+    }
   }
 }
 

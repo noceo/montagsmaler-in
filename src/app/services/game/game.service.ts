@@ -1,8 +1,10 @@
 import { Injectable, OnInit } from '@angular/core';
 import {
+  ChatMessage,
   DrawStatus,
   GamePhase,
   GameStatusMessage,
+  GuessMessage,
   InitMessage,
   Message,
   MessageType,
@@ -30,6 +32,8 @@ export class GameService {
   private maxRounds = new BehaviorSubject<number>(3);
   private chosenWord = new BehaviorSubject<string>('');
   private revealedLetters = new BehaviorSubject<string[]>([]);
+  private lastGuess = new BehaviorSubject<string>('');
+  private isGuessCorrect = new BehaviorSubject<boolean>(false);
   private revealedIndices = [];
   private messageHandlers: Partial<
     Record<MessageType, (message: Message) => void>
@@ -37,6 +41,7 @@ export class GameService {
     [MessageType.INIT]: (message) => this.handleInit(message),
     [MessageType.GAME_STATUS]: (message) => this.handleGameStatus(message),
     [MessageType.REVEAL_LETTER]: (message) => this.handleRevealLetter(message),
+    [MessageType.GUESS]: (message) => this.handleGuess(message),
   };
 
   readonly phase$ = this.phase.asObservable();
@@ -48,6 +53,8 @@ export class GameService {
   readonly maxRounds$ = this.maxRounds.asObservable();
   readonly chosenWord$ = this.chosenWord.asObservable();
   readonly revealedLetters$ = this.revealedLetters.asObservable();
+  readonly lastGuess$ = this.lastGuess.asObservable();
+  readonly isGuessCorrect$ = this.isGuessCorrect.asObservable();
 
   constructor(
     private messagingService: MessagingService,
@@ -97,14 +104,22 @@ export class GameService {
       this.setActiveUser(activeUser);
       this.setChosenWord(drawStatus.data.chosenWord);
       this.setTimer(drawStatus.data.timer);
+      this.setIsGuessCorrect(false);
     }
   }
 
   private handleRevealLetter(message: Message) {
+    if (this.isGuessCorrect.getValue()) return;
     const { index, letter } = (message as RevealLetterMessage).data;
     let newRevealedLetters = [...this.revealedLetters.getValue()];
     newRevealedLetters[index] = letter;
     this.revealedLetters.next(newRevealedLetters);
+  }
+
+  private handleGuess(message: Message) {
+    const isGuessCorrect = (message as GuessMessage).data.isCorrect;
+    if (this.currentUser?.id === message.userId)
+      this.setIsGuessCorrect(isGuessCorrect);
   }
 
   setPhase(phase: GamePhase) {
@@ -141,5 +156,13 @@ export class GameService {
   setChosenWord(chosenWord: string) {
     this.chosenWord.next(chosenWord);
     this.revealedLetters.next(Array(chosenWord.length).fill('_'));
+  }
+
+  setIsGuessCorrect(isGuessCorrect: boolean) {
+    this.isGuessCorrect.next(isGuessCorrect);
+  }
+
+  setLastGuess(lastGuess: string) {
+    this.lastGuess.next(lastGuess);
   }
 }

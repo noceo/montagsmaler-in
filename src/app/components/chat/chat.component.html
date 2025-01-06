@@ -2,6 +2,7 @@
 <div id="chat-input">
   <input
     #chatInput
+    [disabled]="isGuessCorrect"
     [(ngModel)]="newMessage"
     (ngModelChange)="onInputChange($event)"
     name="chatInput"

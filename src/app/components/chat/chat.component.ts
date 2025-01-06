@@ -12,10 +12,23 @@ import { FormsModule } from '@angular/forms';
 import { SvgIconComponent } from 'angular-svg-icon';
 import { UserService } from '../../services/user/user.service';
 import { MessagingService } from '../../services/messaging/messaging.service';
-import { ChatMessage, MessageType } from '../../types/message.types';
+import {
+  ChatMessage,
+  GamePhase,
+  GuessMessage,
+  MessageType,
+} from '../../types/message.types';
 import { Subject, takeUntil } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { User } from '../../types/user.types';
+import { GameService } from '../../services/game/game.service';
+
+enum UIMessageType {
+  STANDARD,
+  SUCCESS,
+  WARNING,
+  ERROR,
+}
 
 @Component({
   selector: 'app-chat',
@@ -30,11 +43,14 @@ export class ChatComponent implements OnInit {
   @ViewChild('chatInput') chatInputRef!: ElementRef<HTMLElement>;
   @ViewChild('counter') counterRef!: ElementRef<HTMLElement>;
   newMessage = '';
+  isGuessCorrect: boolean = false;
   private currentUser?: User | null;
+  private phase?: GamePhase;
   private destroyRef = inject(DestroyRef);
 
   constructor(
     private userService: UserService,
+    private gameService: GameService,
     private messagingService: MessagingService
   ) {}
 
@@ -43,6 +59,18 @@ export class ChatComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((currentUser) => {
         this.currentUser = currentUser;
+      });
+
+    this.gameService.phase$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((phase) => {
+        this.phase = phase;
+      });
+
+    this.gameService.isGuessCorrect$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((isGuessCorrect) => {
+        this.isGuessCorrect = isGuessCorrect;
       });
   }
 
@@ -55,13 +83,29 @@ export class ChatComponent implements OnInit {
     this.messagingService.messageBus$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((message) => {
-        if (message.type !== MessageType.CHAT) return;
-        const chatMessage = message as ChatMessage;
-        const user = this.userService.getUserById(chatMessage.userId);
-        if (!this.currentUser || !user) return;
+        if (message.type === MessageType.CHAT) {
+          const chatMessage = message as ChatMessage;
+          const user = this.userService.getUserById(chatMessage.userId);
+          if (!this.currentUser || !user) return;
 
-        const username = this.currentUser.id === user.id ? 'You' : user.name;
-        this.addMessageToChatArea(username, chatMessage.data.text);
+          const username = this.currentUser.id === user.id ? 'You' : user.name;
+          const uiMessage = `${username}: ${chatMessage.data.text}`;
+          this.addMessageToChatArea(uiMessage);
+        }
+      });
+
+    this.messagingService.messageBus$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((message) => {
+        if (message.type === MessageType.GUESS) {
+          const guessMessage = message as GuessMessage;
+          const user = this.userService.getUserById(guessMessage.userId);
+          if (!this.currentUser || !user) return;
+
+          const username = this.currentUser.id === user.id ? 'You' : user.name;
+          const uiMessage = `${username} guessed the word.`;
+          this.addMessageToChatArea(uiMessage, UIMessageType.SUCCESS);
+        }
       });
   }
 
@@ -73,6 +117,9 @@ export class ChatComponent implements OnInit {
 
   onSend() {
     if (!this.newMessage || !this.currentUser) return;
+
+    if (this.phase === GamePhase.DRAW)
+      this.gameService.setLastGuess(this.newMessage);
 
     this.messagingService.send({
       type: MessageType.CHAT,
@@ -87,15 +134,32 @@ export class ChatComponent implements OnInit {
     this.counterRef.nativeElement.classList.add('hidden');
   }
 
-  private addMessageToChatArea(username: string, message: string) {
+  private addMessageToChatArea(
+    message: string,
+    type?: UIMessageType,
+    username: string = ''
+  ) {
     const containerElement = document.createElement('p');
     containerElement.className = 'message';
+    switch (type) {
+      case UIMessageType.SUCCESS:
+        containerElement.classList.add('success');
+        break;
+      case UIMessageType.WARNING:
+        containerElement.classList.add('warning');
+        break;
+      case UIMessageType.ERROR:
+        containerElement.classList.add('error');
+        break;
+    }
 
-    const usernameElement = document.createElement('b');
+    if (username) {
+      const usernameElement = document.createElement('b');
+      usernameElement.textContent = `${username}: `;
+      containerElement.appendChild(usernameElement);
+    }
+
     const messageElement = document.createTextNode(message);
-    usernameElement.textContent = `${username}: `;
-
-    containerElement.appendChild(usernameElement);
     containerElement.appendChild(messageElement);
     this.chatAreaRef.nativeElement.appendChild(containerElement);
     this.chatAreaRef.nativeElement.scrollTo({
