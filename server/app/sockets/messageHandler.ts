@@ -174,6 +174,7 @@ export class MessageHandler {
       gamePhase === GamePhase.DRAW &&
       game.isGuessCorrect(message.data.text)
     ) {
+      game.registerCorrectGuess(message.userId);
       this.webSocketManager.broadcastToRoom(roomCode, {
         type: MessageType.GUESS,
         userId: message.userId,

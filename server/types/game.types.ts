@@ -16,20 +16,27 @@ const PHASE_DURATIONS: Record<GamePhase, number> = {
   [GamePhase.RESULT]: 0,
 };
 
+const MAX_POINTS = 1000;
+
 export class Game {
   private phase: GamePhase;
+  private phaseDuration: number;
   private activeUser?: User;
-  private users: User[];
+  private users: { user: User; points: number }[];
   private currentRound: number;
+  private currentRoundStats: { user: User; points: number }[];
   private maxRounds: number;
   private chosenWord: string;
   private wordChoices: string[];
+  private correctGuesses: number;
   private webSocketManager: WebSocketManager;
   private roomCode: string;
-  private timer: number;
   private currentTimeout: NodeJS.Timeout | null;
   private revealInterval: NodeJS.Timeout | null;
+  private timerInterval: NodeJS.Timeout | null;
+  private secondsRemaining: number;
   cancelWordPickPhase?: () => void;
+  cancelDrawPhase?: () => void;
 
   constructor(
     webSocketManager: WebSocketManager,
@@ -38,16 +45,20 @@ export class Game {
     maxRounds: number
   ) {
     this.phase = GamePhase.PREPARE;
+    this.phaseDuration = PHASE_DURATIONS[GamePhase.PREPARE];
     this.chosenWord = '';
     this.wordChoices = ['test1', 'test2', 'test3'];
+    this.correctGuesses = 0;
     this.webSocketManager = webSocketManager;
     this.roomCode = roomCode;
-    this.users = users;
-    this.timer = 0;
+    this.users = users.map((user) => ({ user: user, points: 0 }));
     this.currentRound = 1;
+    this.currentRoundStats = [...this.users];
     this.maxRounds = maxRounds;
     this.currentTimeout = null;
     this.revealInterval = null;
+    this.timerInterval = null;
+    this.secondsRemaining = 0;
   }
 
   getPhase(): GamePhase {
@@ -74,15 +85,48 @@ export class Game {
     return guess === this.chosenWord;
   }
 
+  registerCorrectGuess(userId: string) {
+    const user = this.users.find((entry) => entry.user.id === userId);
+    const currentRoundUser = this.currentRoundStats.find(
+      (entry) => entry.user.id === userId
+    );
+    if (!user || !currentRoundUser) return;
+
+    // calculate points based on remaining time
+    const remainingTimePercentage = this.secondsRemaining / this.phaseDuration;
+    let points;
+    if (remainingTimePercentage >= 0.9) points = MAX_POINTS;
+    else if (remainingTimePercentage >= 0.8) points = MAX_POINTS * 0.8;
+    else if (remainingTimePercentage >= 0.7) points = MAX_POINTS * 0.7;
+    else if (remainingTimePercentage >= 0.6) points = MAX_POINTS * 0.6;
+    else if (remainingTimePercentage >= 0.5) points = MAX_POINTS * 0.5;
+    else points = MAX_POINTS * 0.25;
+    points = Math.floor(points);
+
+    user.points += points;
+    currentRoundUser.points += points;
+    this.correctGuesses++;
+
+    if (this.correctGuesses === this.users.length && this.cancelDrawPhase) {
+      this.cancelDrawPhase();
+    }
+  }
+
   async start() {
     for (let i = 0; i < this.maxRounds; i++) {
       this.currentRound = i + 1;
+      this.currentRoundStats = this.users.map((entry) => ({
+        user: entry.user,
+        points: 0,
+      }));
       console.log(`Round: ${this.currentRound}`);
-      for (const user of this.users) {
+      for (const { user } of this.users) {
         this.activeUser = user;
+        this.correctGuesses = 0;
         console.log(`Active User: ${this.activeUser.name}`);
         await this.wordPickPhase(this.activeUser);
         await this.drawPhase(this.activeUser);
+        console.log('Round Stats: ', this.currentRoundStats);
       }
     }
     this.resultPhase();
@@ -90,7 +134,7 @@ export class Game {
 
   private wordPickPhase(activeUser: User): Promise<void> {
     this.phase = GamePhase.WORD_PICK;
-    const duration = PHASE_DURATIONS[GamePhase.WORD_PICK];
+    this.phaseDuration = PHASE_DURATIONS[GamePhase.WORD_PICK];
     this.webSocketManager.broadcastToRoom(this.roomCode, {
       type: MessageType.GAME_STATUS,
       data: {
@@ -99,19 +143,21 @@ export class Game {
           data: {
             userId: activeUser.id,
             choices: this.wordChoices,
-            timer: duration,
+            timer: this.phaseDuration,
             currentRound: this.currentRound,
           },
         } as WordPickStatus,
       },
     } as GameStatusMessage);
     console.log(`Phase: ${this.phase}`);
-    console.log(duration);
+    console.log(this.phaseDuration);
+    this.startTimer(this.phaseDuration);
+
     return new Promise((resolve, _reject) => {
       this.currentTimeout = setTimeout(() => {
         this.chosenWord = this.wordChoices[Math.floor(Math.random() * 3)];
         resolve();
-      }, duration * 1000);
+      }, this.phaseDuration * 1000);
 
       this.cancelWordPickPhase = () => {
         clearTimeout(this.currentTimeout!);
@@ -123,7 +169,7 @@ export class Game {
 
   private drawPhase(activeUser: User): Promise<void> {
     this.phase = GamePhase.DRAW;
-    const duration = PHASE_DURATIONS[GamePhase.DRAW];
+    this.phaseDuration = PHASE_DURATIONS[GamePhase.DRAW];
     console.log(this.chosenWord);
 
     this.webSocketManager.broadcastToRoom(this.roomCode, {
@@ -134,7 +180,7 @@ export class Game {
           data: {
             userId: activeUser.id,
             drawHistory: {},
-            timer: duration,
+            timer: this.phaseDuration,
             currentRound: this.currentRound,
             chosenWord: this.chosenWord,
           },
@@ -142,11 +188,11 @@ export class Game {
       },
     } as GameStatusMessage);
     console.log(`Phase: ${this.phase}`);
-    console.log(duration);
+    console.log(this.phaseDuration);
 
     // set interval for revealing random letters
     const chosenWord = this.chosenWord;
-    const revealInterval = Math.floor(duration / chosenWord.length);
+    const revealInterval = Math.floor(this.phaseDuration / chosenWord.length);
     const randomIndices = Array.from(
       { length: chosenWord.length },
       (_, i) => i
@@ -159,7 +205,12 @@ export class Game {
       ];
     }
     let i = 0;
-    console.log(randomIndices, revealInterval, duration, chosenWord.length);
+    console.log(
+      randomIndices,
+      revealInterval,
+      this.phaseDuration,
+      chosenWord.length
+    );
 
     this.revealInterval = setInterval(() => {
       const randIndex = randomIndices[i];
@@ -173,11 +224,19 @@ export class Game {
       i++;
     }, revealInterval * 1000);
 
+    this.startTimer(this.phaseDuration);
+
     return new Promise((resolve, _reject) => {
       setTimeout(() => {
         clearInterval(this.revealInterval!);
         resolve();
-      }, duration * 1000);
+      }, this.phaseDuration * 1000);
+
+      this.cancelDrawPhase = () => {
+        clearTimeout(this.currentTimeout!);
+        resolve();
+        console.log('Draw Timeout cancelled.');
+      };
     });
   }
 
@@ -185,8 +244,12 @@ export class Game {
     console.log('Showing results...');
   }
 
-  private setTimer(callback: () => void, seconds: number): NodeJS.Timeout {
-    this.timer = seconds;
-    return setTimeout(callback, seconds * 1000);
+  private startTimer(seconds: number): void {
+    if (this.timerInterval) clearInterval(this.timerInterval);
+    this.secondsRemaining = seconds;
+    this.timerInterval = setInterval(() => {
+      if (this.secondsRemaining > 0) this.secondsRemaining--;
+      else clearInterval(this.timerInterval!);
+    }, 1000);
   }
 }
