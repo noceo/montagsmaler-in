@@ -116,7 +116,7 @@ export interface GuessMessage extends Message {
   userId: string;
   data: {
     isCorrect: boolean;
-    isPartlyCorrect: boolean;
+    isPartiallyCorrect: boolean;
   };
 }
 

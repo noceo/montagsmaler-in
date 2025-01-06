@@ -8,6 +8,7 @@ import {
   WordPickStatus,
 } from './message.types';
 import { User } from './user.types';
+import distance from 'jaro-winkler';
 
 const PHASE_DURATIONS: Record<GamePhase, number> = {
   [GamePhase.PREPARE]: 0,
@@ -83,6 +84,10 @@ export class Game {
 
   isGuessCorrect(guess: string): boolean {
     return guess === this.chosenWord;
+  }
+
+  isGuessPartiallyCorrect(guess: string): boolean {
+    return distance(guess, this.chosenWord) > 0.9;
   }
 
   registerCorrectGuess(userId: string) {

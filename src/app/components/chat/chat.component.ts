@@ -46,6 +46,7 @@ export class ChatComponent implements OnInit {
   isGuessCorrect: boolean = false;
   private currentUser?: User | null;
   private phase?: GamePhase;
+  private lastGuess: string = '';
   private destroyRef = inject(DestroyRef);
 
   constructor(
@@ -71,6 +72,12 @@ export class ChatComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((isGuessCorrect) => {
         this.isGuessCorrect = isGuessCorrect;
+      });
+
+    this.gameService.lastGuess$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((lastGuess) => {
+        this.lastGuess = lastGuess;
       });
   }
 
@@ -99,12 +106,20 @@ export class ChatComponent implements OnInit {
       .subscribe((message) => {
         if (message.type === MessageType.GUESS) {
           const guessMessage = message as GuessMessage;
-          const user = this.userService.getUserById(guessMessage.userId);
-          if (!this.currentUser || !user) return;
-
-          const username = this.currentUser.id === user.id ? 'You' : user.name;
-          const uiMessage = `${username} guessed the word.`;
-          this.addMessageToChatArea(uiMessage, UIMessageType.SUCCESS);
+          // received by every client
+          if (guessMessage.data.isCorrect) {
+            const user = this.userService.getUserById(guessMessage.userId);
+            if (!this.currentUser || !user) return;
+            const username =
+              this.currentUser.id === user.id ? 'You' : user.name;
+            const uiMessage = `${username} guessed the word.`;
+            this.addMessageToChatArea(uiMessage, UIMessageType.SUCCESS);
+          }
+          // only received by the user affected
+          else if (guessMessage.data.isPartiallyCorrect) {
+            const uiMessage = `${this.lastGuess} is close.`;
+            this.addMessageToChatArea(uiMessage, UIMessageType.WARNING);
+          }
         }
       });
   }

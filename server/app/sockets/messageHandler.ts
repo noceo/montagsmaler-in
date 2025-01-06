@@ -170,19 +170,27 @@ export class MessageHandler {
 
     const game = room.getGame(this.webSocketManager);
     const gamePhase = game.getPhase();
-    if (
-      gamePhase === GamePhase.DRAW &&
-      game.isGuessCorrect(message.data.text)
-    ) {
-      game.registerCorrectGuess(message.userId);
-      this.webSocketManager.broadcastToRoom(roomCode, {
-        type: MessageType.GUESS,
-        userId: message.userId,
-        data: {
-          isCorrect: true,
-        },
-      } as GuessMessage);
-      return;
+    if (gamePhase === GamePhase.DRAW) {
+      console.log(game.isGuessPartiallyCorrect(message.data.text));
+      if (game.isGuessCorrect(message.data.text)) {
+        game.registerCorrectGuess(message.userId);
+        this.webSocketManager.broadcastToRoom(roomCode, {
+          type: MessageType.GUESS,
+          userId: message.userId,
+          data: {
+            isCorrect: true,
+          },
+        } as GuessMessage);
+        return;
+      } else if (game.isGuessPartiallyCorrect(message.data.text)) {
+        this.webSocketManager.sendMessageToUser(message.userId, {
+          type: MessageType.GUESS,
+          userId: message.userId,
+          data: {
+            isPartiallyCorrect: true,
+          },
+        } as GuessMessage);
+      }
     }
 
     this.webSocketManager.broadcastToRoom(roomCode, {
