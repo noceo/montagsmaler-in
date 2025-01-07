@@ -25,7 +25,11 @@ export class Game {
   private activeUser?: User;
   private users: { user: User; points: number }[];
   private currentRound: number;
-  private currentRoundStats: { user: User; points: number }[];
+  private currentDrawPhaseStats: {
+    user: User;
+    points: number;
+    guessedCorrectly: boolean;
+  }[];
   private maxRounds: number;
   private chosenWord: string;
   private wordChoices: string[];
@@ -54,7 +58,11 @@ export class Game {
     this.roomCode = roomCode;
     this.users = users.map((user) => ({ user: user, points: 0 }));
     this.currentRound = 1;
-    this.currentRoundStats = [...this.users];
+    this.currentDrawPhaseStats = users.map((user) => ({
+      user: user,
+      points: 0,
+      guessedCorrectly: false,
+    }));
     this.maxRounds = maxRounds;
     this.currentTimeout = null;
     this.revealInterval = null;
@@ -90,12 +98,20 @@ export class Game {
     return distance(guess, this.chosenWord) > 0.9;
   }
 
+  isFirstCorrectGuess(userId: string): boolean {
+    const user = this.currentDrawPhaseStats.find(
+      (user) => user.user.id === userId
+    );
+    if (!user) return true;
+    return !user.guessedCorrectly;
+  }
+
   registerCorrectGuess(userId: string) {
     const user = this.users.find((entry) => entry.user.id === userId);
-    const currentRoundUser = this.currentRoundStats.find(
+    const currentDrawPhaseUser = this.currentDrawPhaseStats.find(
       (entry) => entry.user.id === userId
     );
-    if (!user || !currentRoundUser) return;
+    if (!user || !currentDrawPhaseUser) return;
 
     // calculate points based on remaining time
     const remainingTimePercentage = this.secondsRemaining / this.phaseDuration;
@@ -109,7 +125,8 @@ export class Game {
     points = Math.floor(points);
 
     user.points += points;
-    currentRoundUser.points += points;
+    currentDrawPhaseUser.points += points;
+    currentDrawPhaseUser.guessedCorrectly = true;
     this.correctGuesses++;
 
     if (this.correctGuesses === this.users.length && this.cancelDrawPhase) {
@@ -120,18 +137,19 @@ export class Game {
   async start() {
     for (let i = 0; i < this.maxRounds; i++) {
       this.currentRound = i + 1;
-      this.currentRoundStats = this.users.map((entry) => ({
-        user: entry.user,
-        points: 0,
-      }));
       console.log(`Round: ${this.currentRound}`);
       for (const { user } of this.users) {
+        this.currentDrawPhaseStats = this.users.map((entry) => ({
+          user: entry.user,
+          points: 0,
+          guessedCorrectly: false,
+        }));
         this.activeUser = user;
         this.correctGuesses = 0;
         console.log(`Active User: ${this.activeUser.name}`);
         await this.wordPickPhase(this.activeUser);
         await this.drawPhase(this.activeUser);
-        console.log('Round Stats: ', this.currentRoundStats);
+        console.log('Round Stats: ', this.currentDrawPhaseStats);
       }
     }
     this.resultPhase();
