@@ -1,4 +1,4 @@
-import { WebSocketManager } from '../app/sockets/webSocketManager';
+import { WebSocketController } from '../controllers/websocket.controller';
 import {
   DrawStatus,
   GamePhase,
@@ -6,8 +6,8 @@ import {
   MessageType,
   RevealLetterMessage,
   WordPickStatus,
-} from './message.types';
-import { User } from './user.types';
+} from '../types/message.types';
+import { User } from './user.model';
 import distance from 'jaro-winkler';
 
 const PHASE_DURATIONS: Record<GamePhase, number> = {
@@ -34,7 +34,7 @@ export class Game {
   private chosenWord: string;
   private wordChoices: string[];
   private correctGuesses: number;
-  private webSocketManager: WebSocketManager;
+  private webSocketManager: WebSocketController;
   private roomCode: string;
   private currentTimeout: NodeJS.Timeout | null;
   private revealInterval: NodeJS.Timeout | null;
@@ -44,7 +44,7 @@ export class Game {
   cancelDrawPhase?: () => void;
 
   constructor(
-    webSocketManager: WebSocketManager,
+    webSocketManager: WebSocketController,
     roomCode: string,
     users: User[],
     maxRounds: number

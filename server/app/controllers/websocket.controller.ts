@@ -1,14 +1,14 @@
 import { WebSocket } from 'ws';
-import { RoomManager } from './roomManager';
-import { Message } from '../../types/message.types';
+import { RoomController } from './room.controller';
+import { Message } from '../types/message.types';
 
-export class WebSocketManager {
-  private roomManager: RoomManager;
+export class WebSocketController {
+  private roomManager: RoomController;
   private userSocketMap = new Map<string, WebSocket>(); // Maps user ID to WebSocket
   private socketUserMap = new Map<WebSocket, string>(); // Maps WebSocket to user ID
   private socketRoomMap = new Map<WebSocket, string>(); // Maps WebSocket to room code
 
-  constructor(roomManager: RoomManager) {
+  constructor(roomManager: RoomController) {
     this.roomManager = roomManager;
   }
 

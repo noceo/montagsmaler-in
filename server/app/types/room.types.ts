@@ -1,6 +1,6 @@
-import { WebSocketManager } from '../app/sockets/webSocketManager';
-import { Game } from './game.types';
-import { User } from './user.types';
+import { WebSocketController } from '../controllers/websocket.controller';
+import { Game } from '../model/game.model';
+import { User } from '../model/user.model';
 
 export class Room {
   private code: string;
@@ -41,7 +41,7 @@ export class Room {
     return this.name;
   }
 
-  getGame(wsm: WebSocketManager) {
+  getGame(wsm: WebSocketController) {
     if (!this.game) this.game = new Game(wsm, this.code, this.getUsers(), 3);
     return this.game;
   }

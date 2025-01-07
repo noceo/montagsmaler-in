@@ -1,5 +1,5 @@
 import { Geometry, Path } from './geometry.types';
-import { User } from './user.types';
+import { User } from '../model/user.model';
 
 export enum MessageType {
   LOGIN,

@@ -1,9 +1,7 @@
-import { Game } from '../../types/game.types';
-import { GamePhase } from '../../types/message.types';
-import { Room } from '../../types/room.types';
-import { User } from '../../types/user.types';
+import { Room } from '../types/room.types';
+import { User } from '../model/user.model';
 
-export class RoomManager {
+export class RoomController {
   private rooms: { [roomCode: string]: Room };
 
   constructor() {

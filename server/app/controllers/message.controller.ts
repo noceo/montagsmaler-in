@@ -1,27 +1,28 @@
 import WebSocket from 'ws';
-import { User } from '../../types/user.types';
-import { RoomManager } from './roomManager';
-import { WebSocketManager } from './webSocketManager';
+import { User } from '../model/user.model';
+import { RoomController } from './room.controller';
+import { WebSocketController } from './websocket.controller';
 import {
   ChatMessage,
   ChooseWordMessage,
   GamePhase,
-  GameStatusMessage,
   GuessMessage,
   InitMessage,
   JoinRoomMessage,
   LoginMessage,
   Message,
   MessageType,
-} from '../../types/message.types';
+} from '../types/message.types';
 import { nanoid } from 'nanoid';
-import { Game } from '../../types/game.types';
 
-export class MessageHandler {
-  private roomManager: RoomManager;
-  private webSocketManager: WebSocketManager;
+export class MessageController {
+  private roomManager: RoomController;
+  private webSocketManager: WebSocketController;
 
-  constructor(roomManager: RoomManager, webSocketManager: WebSocketManager) {
+  constructor(
+    roomManager: RoomController,
+    webSocketManager: WebSocketController
+  ) {
     this.roomManager = roomManager;
     this.webSocketManager = webSocketManager;
   }
@@ -59,6 +60,11 @@ export class MessageHandler {
           console.log(chatMessage);
           this.handleChatMessage(ws, chatMessage);
           break;
+        case MessageType.DRAW_PATH:
+        case MessageType.DRAW_SHAPE:
+        case MessageType.MOUSE_MOVE:
+          break;
+
         default:
           console.error(`Unknown action: ${msg.type}`);
       }

@@ -9,14 +9,14 @@ import {
   Message,
   MessageType,
   ShapeData,
-} from '../../types/message.types';
-import { Point } from '../../types/geometry.types';
+} from '../types/message.types';
+import { Point } from '../types/geometry.types';
 import { nanoid } from 'nanoid';
-import { User } from '../../types/user.types';
-import { Room } from '../../types/room.types';
-import { RoomManager } from './roomManager';
-import { WebSocketManager } from './webSocketManager';
-import { MessageHandler } from './messageHandler';
+import { User } from '../model/user.model';
+import { Room } from '../types/room.types';
+import { RoomController } from '../controllers/room.controller';
+import { WebSocketController } from '../controllers/websocket.controller';
+import { MessageController } from '../controllers/message.controller';
 
 export const initSocket = () => {
   // set up web socket
@@ -28,9 +28,9 @@ export const initSocket = () => {
   let clientRoomMap = new Map<WebSocket, string>();
   let clientUserMap = new Map<WebSocket, string>();
 
-  const roomManager = new RoomManager();
-  const webSocketManager = new WebSocketManager(roomManager);
-  const messageHandler = new MessageHandler(roomManager, webSocketManager);
+  const roomManager = new RoomController();
+  const webSocketManager = new WebSocketController(roomManager);
+  const messageHandler = new MessageController(roomManager, webSocketManager);
 
   wss.on('connection', (ws, connectionRequest) => {
     const [_path, params] = connectionRequest?.url?.split('?') || [];

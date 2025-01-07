@@ -1,20 +1,9 @@
 import 'dotenv/config';
 import express from 'express';
-import { WebSocket, WebSocketServer } from 'ws';
-import http from 'http';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import { User } from '../types/user.types';
-import { Point } from '../types/geometry.types';
-import {
-  DrawPathMessage,
-  DrawShapeMessage,
-  Message,
-  ShapeData,
-} from '../types/message.types';
 import { PrismaClient } from '@prisma/client';
-import sessions from './routes/sessions';
-import { initSocket } from './sockets/socket';
+import { initSocket } from './websocket/socket';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -26,7 +15,6 @@ app.use(
     extended: true,
   })
 );
-// app.use('/api/v1/sessions', sessions);
 
 initSocket();
 
