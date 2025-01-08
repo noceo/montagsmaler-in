@@ -1,6 +1,5 @@
-import { Injectable, OnInit } from '@angular/core';
+import { Injectable } from '@angular/core';
 import {
-  ChatMessage,
   DrawStatus,
   GamePhase,
   GameStatusMessage,
@@ -11,7 +10,7 @@ import {
   RevealLetterMessage,
   WordPickStatus,
 } from '../../types/message.types';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, combineLatest, map, Observable, of } from 'rxjs';
 import { User } from '../../types/user.types';
 import { MessagingService } from '../messaging/messaging.service';
 import { UserService } from '../user/user.service';
@@ -55,6 +54,7 @@ export class GameService {
   readonly revealedLetters$ = this.revealedLetters.asObservable();
   readonly lastGuess$ = this.lastGuess.asObservable();
   readonly isGuessCorrect$ = this.isGuessCorrect.asObservable();
+  readonly isMyTurn$: Observable<boolean> = of(false);
 
   constructor(
     private messagingService: MessagingService,
@@ -67,6 +67,13 @@ export class GameService {
 
     this.userService.currentUser$.subscribe(
       (currentUser) => (this.currentUser = currentUser)
+    );
+
+    this.isMyTurn$ = combineLatest([
+      this.activeUser$,
+      this.userService.currentUser$,
+    ]).pipe(
+      map(([activeUser, currentUser]) => activeUser?.id === currentUser?.id)
     );
   }
 

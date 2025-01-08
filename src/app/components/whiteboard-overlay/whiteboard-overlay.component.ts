@@ -25,7 +25,7 @@ export class WhiteboardOverlayComponent implements OnInit {
   phase?: GamePhase;
   choices?: string[];
   activeUser?: User | null;
-  isMyTurn$?: Observable<boolean>;
+  isMyTurn: boolean = false;
   private destroyRef = inject(DestroyRef);
 
   constructor(
@@ -53,13 +53,9 @@ export class WhiteboardOverlayComponent implements OnInit {
         this.activeUser = activeUser;
       });
 
-    this.isMyTurn$ = combineLatest([
-      this.gameService.activeUser$,
-      this.userService.currentUser$,
-    ]).pipe(
-      map(([activeUser, currentUser]) => activeUser?.id === currentUser?.id),
-      takeUntilDestroyed(this.destroyRef)
-    );
+    this.gameService.isMyTurn$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((isMyTurn) => (this.isMyTurn = isMyTurn));
 
     this.messagingService.messageBus$
       .pipe(takeUntilDestroyed(this.destroyRef))

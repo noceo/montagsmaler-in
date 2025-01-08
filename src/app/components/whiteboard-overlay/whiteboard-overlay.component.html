@@ -8,7 +8,7 @@
   </div>
   } @else if (phase === GamePhase.WORD_PICK) {
   <div class="word-pick">
-    @if (isMyTurn$ | async) {
+    @if (isMyTurn) {
     <div class="word-pick__choices">
       @for (choice of choices; track choice) {
       <app-button (onClick)="onWordPick($event)">{{ choice }}</app-button>
