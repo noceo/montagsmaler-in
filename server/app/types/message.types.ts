@@ -127,11 +127,5 @@ export interface DrawPathMessage extends Message {
 
 export interface DrawShapeMessage extends Message {
   userId: string;
-  data: { userId: string; shape: string; geometry: Geometry };
-}
-
-export interface ShapeData {
-  userId: string;
-  shape: string;
-  geometry: Geometry;
+  data: { geometry: Geometry };
 }

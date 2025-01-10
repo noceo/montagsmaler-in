@@ -15,6 +15,7 @@ import { MessagingService } from '../../services/messaging/messaging.service';
 import {
   DrawPathMessage,
   DrawShapeMessage,
+  GamePhase,
   HistoryMessage,
   JoinRoomMessage,
   MessageType,
@@ -23,7 +24,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { CanvasService } from '../../services/canvas/canvas.service';
 import { UserService } from '../../services/user/user.service';
-import { Subscription } from 'rxjs';
+import { filter, Subscription } from 'rxjs';
 import { faker } from '@faker-js/faker';
 import { Point } from '../../types/geometry.types';
 import {
@@ -34,6 +35,8 @@ import {
 import { WhiteboardOverlayComponent } from '../whiteboard-overlay/whiteboard-overlay.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
+import { GameService } from '../../services/game/game.service';
+import { User } from '../../types/user.types';
 
 @Component({
   selector: 'app-whiteboard',
@@ -45,9 +48,12 @@ import { CommonModule } from '@angular/common';
 })
 export class WhiteboardComponent {
   @ViewChild('canvasContainer') canvasContainerRef!: ElementRef<HTMLElement>;
+  @ViewChild('myCanvasLayer') myCanvasLayer!: ElementRef<HTMLElement>;
   @ViewChild('canvasBase') canvasBaseRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('canvasPreview') canvasPreviewRef!: ElementRef<HTMLCanvasElement>;
   private destroyRef = inject(DestroyRef);
+  private currentUser!: User;
+  isMyTurn?: boolean;
   private contextBase!: CanvasRenderingContext2D;
   private contextPreview!: CanvasRenderingContext2D;
   private isDrawing = false;
@@ -68,13 +74,11 @@ export class WhiteboardComponent {
     ellipse: '/assets/icons/ellipse.svg',
   };
 
-  //   contextBaseColor = '#000000';
-  //   contextPreviewColor = this.getPreviewColor(this.contextBaseColor);
-  //   strokeWidthName: StrokeWidth = 'small';
+  strokeWidthName: StrokeWidth = 'small';
   strokeWidth = 15;
+  contextBaseColor = '#000000';
+  contextPreviewColor = this.getPreviewColor(this.contextBaseColor);
   mode: DrawMode = 'path';
-  pathCursor = '../../assets/ions';
-  cursorImage = new Image(64, 64);
   baseWidth = 2000;
   heightScale = 0.7;
   currentPath: Point[] = [];
@@ -89,26 +93,56 @@ export class WhiteboardComponent {
     private userService: UserService,
     private canvasService: CanvasService,
     private messagingService: MessagingService,
+    private gameService: GameService,
     private toolbarService: ToolbarService
   ) {}
 
   ngAfterViewInit() {
+    this.gameService.isMyTurn$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((isMyTurn) => (this.isMyTurn = isMyTurn));
+
+    this.gameService.phase$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((phase) => {
+        if (phase === GamePhase.DRAW) this.canvasService.clearAllCanvasLayers();
+      });
+
+    this.gameService.activeUser$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((activeUser) => {
+        if (!activeUser) return;
+        if (activeUser.id !== this.currentUser.id) {
+          this.canvasService.addCanvasLayer(
+            activeUser.id,
+            this.canvasContainerRef.nativeElement
+          );
+        }
+      });
+
+    this.userService.currentUser$
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter((user): user is User => user !== null)
+      )
+      .subscribe((currentUser) => (this.currentUser = currentUser));
+
     // set up message handlers
     this.messagingService.messageBus$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((message) => {
-        if (message.type === MessageType.JOIN_ROOM) {
-          this.canvasService.addCanvasLayer(
-            (message as JoinRoomMessage).data.user.id,
-            this.canvasContainerRef.nativeElement
-          );
-        } else if (message.type === MessageType.MOUSE_MOVE)
+        if (message.type === MessageType.MOUSE_MOVE) {
+          const mouseMoveMessage = message as MouseMoveMessage;
+          if (mouseMoveMessage.userId === this.currentUser?.id) return;
+
+          const user = this.userService.getUserById(mouseMoveMessage.userId);
+          if (!user) return;
           this.canvasService.drawCursor(
-            (message as MouseMoveMessage).userId,
-            (message as MouseMoveMessage).data.position
+            user.id,
+            user.name,
+            mouseMoveMessage.data.position
           );
-        //   this.drawCursor((message as MouseMoveMessage).data.position);
-        else if (message.type === MessageType.DRAW_PATH) {
+        } else if (message.type === MessageType.DRAW_PATH) {
           this.canvasService.drawShape(
             message.userId!,
             (message as DrawPathMessage).data.path,
@@ -143,7 +177,7 @@ export class WhiteboardComponent {
     this.contextBase = canvasBase.getContext('2d')!;
     const canvasPreview = this.canvasPreviewRef.nativeElement;
     this.contextPreview = canvasPreview.getContext('2d')!;
-    this.canvasService.setOwnCanvasLayer(this.userId, {
+    this.canvasService.setOwnCanvasLayer(this.currentUser.id, {
       base: {
         element: canvasBase,
         context: this.contextBase,
@@ -166,25 +200,36 @@ export class WhiteboardComponent {
     this.contextPreview.lineCap = 'round';
     this.contextPreview.lineJoin = 'round';
 
-    this.canvasBaseRef.nativeElement.style.cursor =
-      'url("/assets/icons/cursor_pen.svg") 0 24, auto';
-    this.cursorImage.src = '/assets/icons/cursor_pen.svg';
-
     this.toolbarService.mode$.subscribe((mode) => {
       this.mode = mode;
     });
-    this.toolbarService.strokeWidthName$.subscribe((strokeWidth) => {
-      this.strokeWidth = this.strokeWidths[strokeWidth];
-      this.contextBase.lineWidth = this.strokeWidth;
-      this.contextPreview.lineWidth = this.strokeWidth;
-    });
-    this.toolbarService.strokeColor$.subscribe((color) => {
-      this.contextBase.strokeStyle = color;
-      this.contextPreview.strokeStyle = this.getPreviewColor(color);
-    });
+
+    this.toolbarService.strokeWidthName$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((strokeWidthName) => {
+        this.strokeWidth = this.strokeWidths[strokeWidthName];
+        this.contextBase.lineWidth = this.strokeWidth;
+        this.contextPreview.lineWidth = this.strokeWidth;
+      });
+
+    this.toolbarService.strokeColor$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((color) => {
+        this.contextBaseColor = color;
+        this.contextPreviewColor = this.getPreviewColor(color);
+      });
+
+    this.toolbarService
+      .getClearCanvasEmitter()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.onClear();
+      });
   }
 
   onMouseDown(event: MouseEvent) {
+    if (!this.isMyTurn) return;
+
     if (this.mouseOutOfBounds) return;
     this.isDrawing = true;
     this.drawStart = this.getPoint(event);
@@ -199,12 +244,14 @@ export class WhiteboardComponent {
   }
 
   onMouseMove(event: MouseEvent) {
+    if (!this.isMyTurn) return;
+
     const currentPos = this.getPoint(event);
 
     this.messagingService.send({
       type: MessageType.MOUSE_MOVE,
-      userId: this.userId,
-      data: { userId: this.userId, position: currentPos },
+      userId: this.currentUser.id,
+      data: { userId: this.currentUser.id, position: currentPos },
     });
 
     if (!this.isDrawing) return;
@@ -223,18 +270,23 @@ export class WhiteboardComponent {
         this.sendNewPathChunk();
       }
     }
-    this.canvasService.clearCanvas(this.userId, true);
+    this.canvasService.clearCanvas(this.currentUser.id, true);
     const shape = this.canvasService.getShape(
       this.mode,
       this.drawStart,
       currentPos,
       this.currentPath
     );
-    this.canvasService.drawShape(this.userId, shape, true);
+    shape.strokeColor = this.contextBaseColor;
+    shape.strokeWidth = this.strokeWidth;
+
+    this.canvasService.drawShape(this.currentUser.id, shape, true);
     this.lastPoint = currentPos;
   }
 
   onMouseUp(event: MouseEvent) {
+    if (!this.isMyTurn) return;
+
     this.isDrawing = false;
     const endPos = this.getPoint(event);
 
@@ -243,31 +295,34 @@ export class WhiteboardComponent {
       this.drawStart,
       endPos
     );
-    this.canvasService.drawShape(this.mode, shape, false);
+    shape.strokeColor = this.contextBaseColor;
+    shape.strokeWidth = this.strokeWidth;
+
+    console.log(shape);
+    this.canvasService.drawShape(this.currentUser.id, shape, false);
 
     if (this.mode === 'path') {
       this.sendNewPathChunk(true);
     } else {
       this.messagingService.send({
         type: MessageType.DRAW_SHAPE,
-        userId: this.userId,
+        userId: this.currentUser.id,
         data: {
-          userId: this.userId,
-          shape: this.mode,
+          userId: this.currentUser.id,
           geometry: shape,
         },
       });
     }
-    this.canvasService.clearCanvas(this.userId, true);
+    this.canvasService.clearCanvas(this.currentUser.id, true);
   }
 
   private sendNewPathChunk(isComplete: boolean = false) {
     const newPoints = this.currentPath.slice(this.lastSentIndex);
     const drawPathMessage: DrawPathMessage = {
       type: MessageType.DRAW_PATH,
-      userId: this.userId,
+      userId: this.currentUser.id,
       data: {
-        userId: this.userId,
+        userId: this.currentUser.id,
         pathId: this.currentPathId,
         path: {
           type: 'path',
@@ -283,19 +338,23 @@ export class WhiteboardComponent {
   }
 
   onMouseEnter(event: MouseEvent) {
+    if (this.isMyTurn)
+      this.myCanvasLayer.nativeElement.style.cursor =
+        'url("/assets/icons/cursor_pen.svg") 0 24, auto';
     this.mouseOutOfBounds = false;
   }
 
   onMouseLeave(event: MouseEvent) {
+    this.myCanvasLayer.nativeElement.style.removeProperty('cursor');
     this.mouseOutOfBounds = true;
   }
 
   onClear() {
-    this.canvasService.clearCanvas(this.userId);
+    this.canvasService.clearCanvas(this.currentUser.id);
     this.messagingService.send({
       type: MessageType.CLEAR,
-      userId: this.userId,
-      data: { userId: this.userId },
+      userId: this.currentUser.id,
+      data: { userId: this.currentUser.id },
     });
   }
 

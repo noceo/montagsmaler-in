@@ -13,6 +13,7 @@ app-whiteboard {
 
 #canvas-container {
   position: relative;
+  background-color: #fffbef;
 }
 
 .canvas-layer {
@@ -29,7 +30,6 @@ app-whiteboard {
 
 canvas {
   width: 100%;
-  background-color: #fffbef;
 }
 
 .canvas-preview {

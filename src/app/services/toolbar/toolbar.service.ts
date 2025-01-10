@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { EventEmitter, Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 export type StrokeWidth = 'tiny' | 'small' | 'medium' | 'big';
@@ -11,6 +11,7 @@ export class ToolbarService {
   private mode = new BehaviorSubject<DrawMode>('path');
   private strokeWidthName = new BehaviorSubject<StrokeWidth>('small');
   private strokeColor = new BehaviorSubject<string>('#000000');
+  private onClearCanvas = new EventEmitter<void>();
 
   readonly mode$: Observable<DrawMode> = this.mode.asObservable();
   readonly strokeWidthName$: Observable<StrokeWidth> =
@@ -29,5 +30,13 @@ export class ToolbarService {
 
   setStrokeColor(strokeColor: string) {
     this.strokeColor.next(strokeColor);
+  }
+
+  emitClearCanvasEvent(): void {
+    this.onClearCanvas.emit();
+  }
+
+  getClearCanvasEmitter(): EventEmitter<void> {
+    return this.onClearCanvas;
   }
 }

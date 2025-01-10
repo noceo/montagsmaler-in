@@ -73,6 +73,7 @@ export class CanvasService {
 
   setOwnCanvasLayer(userId: string, canvasLayer: CanvasLayer) {
     this.canvasLayers[userId] = canvasLayer;
+    console.log(this.canvasLayers[userId]);
   }
 
   getCanvasLayer(userId: string) {
@@ -80,6 +81,9 @@ export class CanvasService {
   }
 
   addCanvasLayer(id: string, container: HTMLElement) {
+    // do not add if the is already a layer for that user
+    if (container.querySelector(`[data-user='${id}']`)) return;
+
     const canvasLayerWrapper = document.createElement('div');
     canvasLayerWrapper.className = 'canvas-layer';
     canvasLayerWrapper.setAttribute('data-user', id);
@@ -109,7 +113,6 @@ export class CanvasService {
     contextPreview.lineCap = 'round';
     contextPreview.lineJoin = 'round';
 
-    canvasBase.style.cursor = 'url("/assets/icons/cursor_pen.svg") 0 24, auto';
     this.cursorImage.src = '/assets/icons/cursor_pen.svg';
 
     this.canvasLayers[id] = {
@@ -126,11 +129,14 @@ export class CanvasService {
     ids.forEach((id) => this.addCanvasLayer(id, container));
   }
 
-  removeCanvasLayers(id: string) {
-    delete this.canvasLayers[id];
+  clearAllCanvasLayers() {
+    for (const layer of Object.values(this.canvasLayers)) {
+      this.clear(layer.base.context);
+      this.clear(layer.preview.context);
+    }
   }
 
-  drawCursor(id: string, position: Point) {
+  drawCursor(id: string, name: string, position: Point) {
     const context = this.canvasLayers[id].preview.context;
     this.clear(context);
     context.drawImage(
@@ -140,8 +146,8 @@ export class CanvasService {
       this.cursorImage.width,
       this.cursorImage.height
     );
-    context.font = '48px serif';
-    context.fillText(id, position.x + 64, position.y - 128, 500);
+    context.font = '60px Synonym-Medium';
+    context.fillText(name, position.x + 64, position.y - 75, 500);
   }
 
   getShape(type: string, start: Point, end: Point, points?: Point[]) {

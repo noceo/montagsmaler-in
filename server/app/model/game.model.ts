@@ -7,6 +7,7 @@ import {
   RevealLetterMessage,
   WordPickStatus,
 } from '../types/message.types';
+import { Canvas } from './canvas.model';
 import { User } from './user.model';
 import distance from 'jaro-winkler';
 
@@ -20,6 +21,7 @@ const PHASE_DURATIONS: Record<GamePhase, number> = {
 const MAX_POINTS = 1000;
 
 export class Game {
+  private canvas: Canvas;
   private phase: GamePhase;
   private phaseDuration: number;
   private activeUser?: User;
@@ -49,6 +51,7 @@ export class Game {
     users: User[],
     maxRounds: number
   ) {
+    this.canvas = new Canvas();
     this.phase = GamePhase.PREPARE;
     this.phaseDuration = PHASE_DURATIONS[GamePhase.PREPARE];
     this.chosenWord = '';
@@ -68,6 +71,10 @@ export class Game {
     this.revealInterval = null;
     this.timerInterval = null;
     this.secondsRemaining = 0;
+  }
+
+  getCanvas(): Canvas {
+    return this.canvas;
   }
 
   getPhase(): GamePhase {

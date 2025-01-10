@@ -14,6 +14,7 @@ import { BehaviorSubject, combineLatest, map, Observable, of } from 'rxjs';
 import { User } from '../../types/user.types';
 import { MessagingService } from '../messaging/messaging.service';
 import { UserService } from '../user/user.service';
+import { CanvasService } from '../canvas/canvas.service';
 
 @Injectable({
   providedIn: 'root',
@@ -58,7 +59,8 @@ export class GameService {
 
   constructor(
     private messagingService: MessagingService,
-    private userService: UserService
+    private userService: UserService,
+    private canvasService: CanvasService
   ) {
     this.messagingService.messageBus$.subscribe((message) => {
       if (!Object.hasOwn(this.messageHandlers, message.type)) return;
@@ -89,6 +91,8 @@ export class GameService {
   }
 
   private handleGameStatus(message: Message) {
+    if (!this.currentUser) return;
+
     const gameStatusMessage = message as GameStatusMessage;
     this.setPhase(gameStatusMessage.data.gameStatus.phase);
 

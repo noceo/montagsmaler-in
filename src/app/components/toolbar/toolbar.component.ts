@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnInit } from '@angular/core';
 import { RadioGroupComponent } from '../radio-group/radio-group.component';
 import {
   DrawMode,
@@ -37,5 +37,7 @@ export class ToolbarComponent {
     this.toolbarService.setStrokeWidth(value as StrokeWidth);
   }
 
-  onClear() {}
+  onClear() {
+    this.toolbarService.emitClearCanvasEvent();
+  }
 }

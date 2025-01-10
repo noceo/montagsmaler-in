@@ -5,6 +5,8 @@ import { WebSocketController } from './websocket.controller';
 import {
   ChatMessage,
   ChooseWordMessage,
+  DrawPathMessage,
+  DrawShapeMessage,
   GamePhase,
   GuessMessage,
   InitMessage,
@@ -61,10 +63,17 @@ export class MessageController {
           this.handleChatMessage(ws, chatMessage);
           break;
         case MessageType.DRAW_PATH:
-        case MessageType.DRAW_SHAPE:
-        case MessageType.MOUSE_MOVE:
+          const drawPathMessage = msg as DrawPathMessage;
+          this.handleDrawPathMessage(ws, drawPathMessage);
           break;
-
+        case MessageType.DRAW_SHAPE:
+          const drawShapeMessage = msg as DrawShapeMessage;
+          this.handleDrawShapeMessage(ws, drawShapeMessage);
+          break;
+        case MessageType.MOUSE_MOVE:
+        case MessageType.CLEAR:
+          this.forwardMessage(ws, msg);
+          break;
         default:
           console.error(`Unknown action: ${msg.type}`);
       }
@@ -207,5 +216,27 @@ export class MessageController {
       userId: message.userId,
       data: message.data,
     } as ChatMessage);
+  }
+
+  private handleDrawPathMessage(ws: WebSocket, message: DrawPathMessage) {}
+
+  private handleDrawShapeMessage(ws: WebSocket, message: DrawShapeMessage) {
+    const roomCode = this.webSocketManager.getRoomForSocket(ws);
+    if (!roomCode) return;
+
+    const room = this.roomManager.getRoom(roomCode);
+    if (!room) return;
+
+    const game = room.getGame(this.webSocketManager);
+    const gamePhase = game.getPhase();
+    game.getCanvas().addShape(message.userId, message.data.geometry);
+    this.forwardMessage(ws, message);
+  }
+
+  private forwardMessage(ws: WebSocket, message: Message) {
+    const roomCode = this.webSocketManager.getRoomForSocket(ws);
+    if (!roomCode) return;
+
+    this.webSocketManager.broadcastToRoom(roomCode, message);
   }
 }
