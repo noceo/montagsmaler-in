@@ -1,6 +1,9 @@
+@if(isGameActive) {
 <div>
   <app-timer id="timer" />
   <p>Round {{ currentRound }} of {{ maxRounds }}</p>
 </div>
+} @if(phase === gamePhases.DRAW) {
 <app-word-guess-placeholder />
+}
 <div></div>

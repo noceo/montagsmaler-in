@@ -11,6 +11,10 @@
   min-width: 8rem;
   font-family: "Comico-Regular";
 
+  &:disabled:hover {
+    transform: none;
+  }
+
   &.btn--no-border {
     border: none;
   }

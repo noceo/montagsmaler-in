@@ -2,7 +2,7 @@
 <div id="chat-input">
   <input
     #chatInput
-    [disabled]="isGuessCorrect"
+    [attr.disabled]="isGuessCorrect ? '' : null"
     [(ngModel)]="newMessage"
     (ngModelChange)="onInputChange($event)"
     name="chatInput"
@@ -13,6 +13,7 @@
     class="btn btn--icon-only btn--no-border"
     id="chat-btn-send"
     (click)="onSend()"
+    [attr.disabled]="isGuessCorrect ? '' : null"
   >
     <svg-icon class="btn__icon" src="assets/icons/send.svg" />
   </button>

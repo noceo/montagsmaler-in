@@ -14,6 +14,7 @@ export class ButtonComponent {
   @Input() text: string | undefined;
   @Input() isIconOnly: boolean = false;
   @Input() border: boolean = true;
+  @Input() disabled: boolean = false;
   @Output() onClick = new EventEmitter<any>();
 
   onClickButton(event: Event) {

@@ -2,6 +2,7 @@
   (click)="onClickButton($event)"
   class="btn"
   [ngClass]="{ 'btn--icon-only': isIconOnly, 'btn--no-border': !border }"
+  [attr.disabled]="disabled || null"
 >
   @if(iconSrc) { <svg-icon class="btn__icon" [src]="iconSrc" /> }
   <ng-content>{{ text }}</ng-content>
