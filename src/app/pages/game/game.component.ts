@@ -41,11 +41,21 @@ import { GameInfoPanelComponent } from '../../components/game-info-panel/game-in
   templateUrl: './game.component.html',
   styleUrl: './game.component.scss',
 })
-export class GameComponent implements OnDestroy {
+export class GameComponent implements OnInit, OnDestroy {
+  private destroyRef = inject(DestroyRef);
+  isMyTurn: boolean = false;
+
   constructor(
     private messagingService: MessagingService,
+    private gameService: GameService,
     private userService: UserService
   ) {}
+
+  ngOnInit(): void {
+    this.gameService.isMyTurn$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((isMyTurn) => (this.isMyTurn = isMyTurn));
+  }
 
   ngOnDestroy(): void {
     this.userService.setCurrentUser(null);
