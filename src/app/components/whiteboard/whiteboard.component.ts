@@ -48,7 +48,8 @@ import { User } from '../../types/user.types';
 })
 export class WhiteboardComponent {
   @ViewChild('canvasContainer') canvasContainerRef!: ElementRef<HTMLElement>;
-  @ViewChild('myCanvasLayer') myCanvasLayer!: ElementRef<HTMLElement>;
+  @ViewChild('canvasPreviewContainer')
+  canvasPreviewContainerRef!: ElementRef<HTMLElement>;
   @ViewChild('canvasBase') canvasBaseRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('canvasPreview') canvasPreviewRef!: ElementRef<HTMLCanvasElement>;
   private destroyRef = inject(DestroyRef);
@@ -115,7 +116,8 @@ export class WhiteboardComponent {
         if (activeUser.id !== this.currentUser.id) {
           this.canvasService.addCanvasLayer(
             activeUser.id,
-            this.canvasContainerRef.nativeElement
+            this.canvasPreviewContainerRef.nativeElement,
+            true
           );
         }
       });
@@ -144,18 +146,18 @@ export class WhiteboardComponent {
           );
         } else if (message.type === MessageType.DRAW_PATH) {
           this.canvasService.drawShape(
-            message.userId!,
+            this.currentUser.id,
             (message as DrawPathMessage).data.path,
             false
           );
         } else if (message.type === MessageType.DRAW_SHAPE) {
           this.canvasService.drawShape(
-            (message as DrawShapeMessage).userId,
+            this.currentUser.id,
             (message as DrawShapeMessage).data.geometry,
             false
           );
         } else if (message.type === MessageType.CLEAR) {
-          this.canvasService.clearCanvas(message.userId!);
+          this.canvasService.clearCanvas(this.currentUser.id);
         } else if (message.type === MessageType.HISTORY) {
           this.userService.addUsers((message as HistoryMessage).data.users);
           //   this.canvasService.addCanvasLayers(
@@ -177,16 +179,17 @@ export class WhiteboardComponent {
     this.contextBase = canvasBase.getContext('2d')!;
     const canvasPreview = this.canvasPreviewRef.nativeElement;
     this.contextPreview = canvasPreview.getContext('2d')!;
-    this.canvasService.setOwnCanvasLayer(this.currentUser.id, {
-      base: {
+    this.canvasService.setOwnCanvasLayer(
+      this.currentUser.id,
+      {
         element: canvasBase,
         context: this.contextBase,
       },
-      preview: {
+      {
         element: canvasPreview,
         context: this.contextPreview,
-      },
-    });
+      }
+    );
 
     // set canvas size
     canvasBase.width = this.baseWidth;
@@ -339,13 +342,13 @@ export class WhiteboardComponent {
 
   onMouseEnter(event: MouseEvent) {
     if (this.isMyTurn)
-      this.myCanvasLayer.nativeElement.style.cursor =
+      this.canvasBaseRef.nativeElement.style.cursor =
         'url("/assets/icons/cursor_pen.svg") 0 24, auto';
     this.mouseOutOfBounds = false;
   }
 
   onMouseLeave(event: MouseEvent) {
-    this.myCanvasLayer.nativeElement.style.removeProperty('cursor');
+    this.canvasBaseRef.nativeElement.style.removeProperty('cursor');
     this.mouseOutOfBounds = true;
   }
 

@@ -1,15 +1,15 @@
 <div #canvasContainer id="canvas-container">
-  <div #myCanvasLayer class="canvas-layer">
-    <canvas
-      #canvasBase
-      class="canvas-base"
-      (mousedown)="onMouseDown($event)"
-      (mousemove)="onMouseMove($event)"
-      (mouseup)="onMouseUp($event)"
-      (mouseenter)="onMouseEnter($event)"
-      (mouseleave)="onMouseLeave($event)"
-    >
-    </canvas>
+  <canvas
+    #canvasBase
+    class="canvas-base"
+    (mousedown)="onMouseDown($event)"
+    (mousemove)="onMouseMove($event)"
+    (mouseup)="onMouseUp($event)"
+    (mouseenter)="onMouseEnter($event)"
+    (mouseleave)="onMouseLeave($event)"
+  >
+  </canvas>
+  <div #canvasPreviewContainer class="canvas-preview-container">
     <canvas #canvasPreview class="canvas-preview"></canvas>
   </div>
 </div>

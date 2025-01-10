@@ -1,14 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Geometry, Point } from '../../types/geometry.types';
 
-interface CanvasLayerContent {
+interface CanvasLayer {
   element: HTMLCanvasElement;
   context: CanvasRenderingContext2D;
-}
-
-interface CanvasLayer {
-  base: CanvasLayerContent;
-  preview: CanvasLayerContent;
 }
 
 interface Path extends Geometry {
@@ -42,7 +37,8 @@ interface Ellipse extends Geometry {
   providedIn: 'root',
 })
 export class CanvasService {
-  private canvasLayers: Record<string, CanvasLayer> = {};
+  private canvasLayerBase!: CanvasLayer;
+  private previewCanvasLayers: Record<string, CanvasLayer> = {};
   private getShapeFunctions: Record<
     string,
     (start: Point, end: Point, points?: Point[]) => Geometry
@@ -71,73 +67,51 @@ export class CanvasService {
   private strokeWidth = 15;
   private cursorImage = new Image(64, 64);
 
-  setOwnCanvasLayer(userId: string, canvasLayer: CanvasLayer) {
-    this.canvasLayers[userId] = canvasLayer;
-    console.log(this.canvasLayers[userId]);
+  setOwnCanvasLayer(
+    userId: string,
+    canvasLayerBase: CanvasLayer,
+    canvasLayerPreview: CanvasLayer
+  ) {
+    this.canvasLayerBase = canvasLayerBase;
+    this.previewCanvasLayers[userId] = canvasLayerPreview;
   }
 
   getCanvasLayer(userId: string) {
-    return this.canvasLayers[userId];
+    return this.previewCanvasLayers[userId];
   }
 
-  addCanvasLayer(id: string, container: HTMLElement) {
+  addCanvasLayer(id: string, container: HTMLElement, isPreview: boolean) {
     // do not add if the is already a layer for that user
     if (container.querySelector(`[data-user='${id}']`)) return;
 
-    const canvasLayerWrapper = document.createElement('div');
-    canvasLayerWrapper.className = 'canvas-layer';
-    canvasLayerWrapper.setAttribute('data-user', id);
-
-    const canvasBase = document.createElement('canvas');
-    canvasBase.className = 'canvas-base';
-    const contextBase = canvasBase.getContext('2d')!;
-
-    const canvasPreview = document.createElement('canvas');
-    canvasPreview.className = 'canvas-preview';
-    const contextPreview = canvasPreview.getContext('2d')!;
+    const canvas = document.createElement('canvas');
+    canvas.className = 'canvas-preview-player';
+    canvas.setAttribute('data-user', id);
+    const context = canvas.getContext('2d')!;
 
     // Set canvas size
-    canvasBase.width = this.baseWidth;
-    canvasBase.height = this.baseWidth * this.heightScale;
-    canvasPreview.width = this.baseWidth;
-    canvasPreview.height = this.baseWidth * this.heightScale;
+    canvas.width = this.baseWidth;
+    canvas.height = this.baseWidth * this.heightScale;
 
     // Set default styles
-    contextBase.strokeStyle = this.contextBaseColor;
-    contextBase.lineWidth = this.strokeWidth;
-    contextBase.lineCap = 'round';
-    contextBase.lineJoin = 'round';
-
-    contextPreview.strokeStyle = this.getPreviewColor(this.contextBaseColor);
-    contextPreview.lineWidth = this.strokeWidth;
-    contextPreview.lineCap = 'round';
-    contextPreview.lineJoin = 'round';
+    context.strokeStyle = this.getPreviewColor(this.contextBaseColor);
+    context.lineWidth = this.strokeWidth;
+    context.lineCap = 'round';
+    context.lineJoin = 'round';
 
     this.cursorImage.src = '/assets/icons/cursor_pen.svg';
 
-    this.canvasLayers[id] = {
-      base: { element: canvasBase, context: contextBase },
-      preview: { element: canvasPreview, context: contextPreview },
-    };
+    this.previewCanvasLayers[id] = { element: canvas, context: context };
 
-    canvasLayerWrapper.appendChild(canvasBase);
-    canvasLayerWrapper.appendChild(canvasPreview);
-    container.prepend(canvasLayerWrapper);
+    container.prepend(canvas);
   }
 
   addCanvasLayers(ids: string[], container: HTMLElement) {
-    ids.forEach((id) => this.addCanvasLayer(id, container));
-  }
-
-  clearAllCanvasLayers() {
-    for (const layer of Object.values(this.canvasLayers)) {
-      this.clear(layer.base.context);
-      this.clear(layer.preview.context);
-    }
+    ids.forEach((id) => this.addCanvasLayer(id, container, true));
   }
 
   drawCursor(id: string, name: string, position: Point) {
-    const context = this.canvasLayers[id].preview.context;
+    const context = this.previewCanvasLayers[id].context;
     this.clear(context);
     context.drawImage(
       this.cursorImage,
@@ -157,8 +131,9 @@ export class CanvasService {
 
   drawShape(id: string, geometry: Geometry, isPreview: boolean) {
     const context = isPreview
-      ? this.canvasLayers[id].preview.context
-      : this.canvasLayers[id].base.context;
+      ? this.previewCanvasLayers[id].context
+      : this.canvasLayerBase.context;
+
     const drawFunction = this.drawShapeFunctions[geometry.type];
     drawFunction(geometry, context, isPreview);
   }
@@ -166,9 +141,16 @@ export class CanvasService {
   clearCanvas(id: string, isPreview?: boolean) {
     this.clear(
       isPreview
-        ? this.canvasLayers[id].preview.context
-        : this.canvasLayers[id].base.context
+        ? this.previewCanvasLayers[id].context
+        : this.canvasLayerBase.context
     );
+  }
+
+  clearAllCanvasLayers() {
+    this.clear(this.canvasLayerBase.context);
+    for (const layer of Object.values(this.previewCanvasLayers)) {
+      this.clear(layer.context);
+    }
   }
 
   private drawPoint(point: Point, context: CanvasRenderingContext2D) {
