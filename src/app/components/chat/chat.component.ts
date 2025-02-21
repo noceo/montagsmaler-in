@@ -45,6 +45,7 @@ export class ChatComponent implements OnInit {
   newMessage = '';
   isGuessCorrect: boolean = false;
   private currentUser?: User | null;
+  private activeUser?: User | null;
   private phase?: GamePhase;
   private lastGuess: string = '';
   private destroyRef = inject(DestroyRef);
@@ -62,10 +63,23 @@ export class ChatComponent implements OnInit {
         this.currentUser = currentUser;
       });
 
+    this.gameService.activeUser$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((activeUser) => {
+        this.activeUser = activeUser;
+      });
+
     this.gameService.phase$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((phase) => {
         this.phase = phase;
+        if (
+          phase === GamePhase.DRAW &&
+          this.currentUser?.id !== this.activeUser?.id
+        ) {
+          console.log('focus');
+          setTimeout(() => this.chatInputRef.nativeElement.focus(), 1000);
+        }
       });
 
     this.gameService.isGuessCorrect$

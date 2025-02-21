@@ -7,6 +7,8 @@ import {
   InitMessage,
   Message,
   MessageType,
+  Result,
+  ResultStatus,
   RevealLetterMessage,
   WordPickStatus,
 } from '../../types/message.types';
@@ -34,6 +36,7 @@ export class GameService {
   private revealedLetters = new BehaviorSubject<string[]>([]);
   private lastGuess = new BehaviorSubject<string>('');
   private isGuessCorrect = new BehaviorSubject<boolean>(false);
+  private results = new BehaviorSubject<Result[]>([]);
   private revealedIndices = [];
   private messageHandlers: Partial<
     Record<MessageType, (message: Message) => void>
@@ -55,12 +58,12 @@ export class GameService {
   readonly revealedLetters$ = this.revealedLetters.asObservable();
   readonly lastGuess$ = this.lastGuess.asObservable();
   readonly isGuessCorrect$ = this.isGuessCorrect.asObservable();
+  readonly results$ = this.results.asObservable();
   readonly isMyTurn$: Observable<boolean> = of(false);
 
   constructor(
     private messagingService: MessagingService,
-    private userService: UserService,
-    private canvasService: CanvasService
+    private userService: UserService
   ) {
     this.messagingService.messageBus$.subscribe((message) => {
       if (!Object.hasOwn(this.messageHandlers, message.type)) return;
@@ -87,7 +90,6 @@ export class GameService {
     );
     this.userService.addUsers(otherUsers);
     this.setMaxRounds(initMessage.data.settings.maxRounds);
-    // setTimeout(() => this.gameService.setPhase(GamePhase.DRAW));
   }
 
   private handleGameStatus(message: Message) {
@@ -116,6 +118,9 @@ export class GameService {
       this.setChosenWord(drawStatus.data.chosenWord);
       this.setTimer(drawStatus.data.timer);
       this.setIsGuessCorrect(false);
+    } else if (gameStatusMessage.data.gameStatus.phase === GamePhase.RESULT) {
+      const resultStatus = gameStatusMessage.data.gameStatus as ResultStatus;
+      this.results.next(resultStatus.data.results);
     }
   }
 

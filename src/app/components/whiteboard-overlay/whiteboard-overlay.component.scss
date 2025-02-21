@@ -43,3 +43,20 @@
     column-gap: 2rem;
   }
 }
+
+.results {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  table {
+    border-collapse: separate;
+    border-spacing: 50px 0;
+  }
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.5rem 0;
+  }
+}

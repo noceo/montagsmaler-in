@@ -4,6 +4,7 @@ import {
   GamePhase,
   GameStatusMessage,
   MessageType,
+  ResultStatus,
   RevealLetterMessage,
   WordPickStatus,
 } from '../types/message.types';
@@ -13,8 +14,8 @@ import distance from 'jaro-winkler';
 
 const PHASE_DURATIONS: Record<GamePhase, number> = {
   [GamePhase.PREPARE]: 0,
-  [GamePhase.WORD_PICK]: 3,
-  [GamePhase.DRAW]: 50,
+  [GamePhase.WORD_PICK]: 5,
+  [GamePhase.DRAW]: 20,
   [GamePhase.RESULT]: 0,
 };
 
@@ -272,6 +273,19 @@ export class Game {
 
   private resultPhase() {
     console.log('Showing results...');
+    this.phase = GamePhase.RESULT;
+    const sortedResults = this.users.sort((a, b) => b.points - a.points);
+    this.webSocketManager.broadcastToRoom(this.roomCode, {
+      type: MessageType.GAME_STATUS,
+      data: {
+        gameStatus: {
+          phase: GamePhase.RESULT,
+          data: {
+            results: sortedResults,
+          },
+        } as ResultStatus,
+      },
+    } as GameStatusMessage);
   }
 
   private startTimer(seconds: number): void {

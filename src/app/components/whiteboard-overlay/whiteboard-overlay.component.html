@@ -22,6 +22,23 @@
     }
   </div>
   } @else if (phase === GamePhase.RESULT) {
-  <p>Look at these fantastic results</p>
+  <div class="results">
+    <table>
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Points</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (result of results; track result) {
+        <tr>
+          <td>{{ result.user.name }}</td>
+          <td>{{ result.points }}</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
   }
 </div>

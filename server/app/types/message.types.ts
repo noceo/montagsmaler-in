@@ -27,7 +27,7 @@ export enum GamePhase {
 }
 
 export interface Result {
-  userId: string;
+  user: User;
   points: number;
 }
 
@@ -55,7 +55,7 @@ export interface DrawStatus extends GameStatus {
   };
 }
 export interface ResultStatus extends GameStatus {
-  data: { results?: Result[] };
+  data: { results: Result[] };
 }
 
 export type Message = {

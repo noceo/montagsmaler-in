@@ -3,6 +3,7 @@ import {
   ChooseWordMessage,
   GamePhase,
   MessageType,
+  Result,
 } from '../../types/message.types';
 import { GameService } from '../../services/game/game.service';
 import { ButtonComponent } from '../button/button.component';
@@ -26,12 +27,12 @@ export class WhiteboardOverlayComponent implements OnInit {
   choices?: string[];
   activeUser?: User | null;
   isMyTurn: boolean = false;
+  results: Result[] = [];
   private destroyRef = inject(DestroyRef);
 
   constructor(
     private gameService: GameService,
-    private messagingService: MessagingService,
-    private userService: UserService
+    private messagingService: MessagingService
   ) {}
 
   ngOnInit(): void {
@@ -56,6 +57,10 @@ export class WhiteboardOverlayComponent implements OnInit {
     this.gameService.isMyTurn$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((isMyTurn) => (this.isMyTurn = isMyTurn));
+
+    this.gameService.results$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((results) => (this.results = results));
 
     this.messagingService.messageBus$
       .pipe(takeUntilDestroyed(this.destroyRef))
