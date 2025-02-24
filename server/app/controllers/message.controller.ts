@@ -62,10 +62,10 @@ export class MessageController {
           console.log(chatMessage);
           this.handleChatMessage(ws, chatMessage);
           break;
-        case MessageType.DRAW_PATH:
-          const drawPathMessage = msg as DrawPathMessage;
-          this.handleDrawPathMessage(ws, drawPathMessage);
-          break;
+        // case MessageType.DRAW_PATH:
+        //   const drawPathMessage = msg as DrawPathMessage;
+        //   this.handleDrawPathMessage(ws, drawPathMessage);
+        //   break;
         case MessageType.DRAW_SHAPE:
           const drawShapeMessage = msg as DrawShapeMessage;
           this.handleDrawShapeMessage(ws, drawShapeMessage);
@@ -218,7 +218,17 @@ export class MessageController {
     } as ChatMessage);
   }
 
-  private handleDrawPathMessage(ws: WebSocket, message: DrawPathMessage) {}
+  // private handleDrawPathMessage(ws: WebSocket, message: DrawPathMessage) {
+  //   console.log(message.data.path);
+  //   const path = message.data.path;
+  //   const points = path.points;
+  //   for (let i = 0; i < points.length; i++) {
+  //     const line: Geometry = {
+  //       type: 'line',
+  //       stroke
+  //     }
+  //   }
+  // }
 
   private handleDrawShapeMessage(ws: WebSocket, message: DrawShapeMessage) {
     const roomCode = this.webSocketManager.getRoomForSocket(ws);

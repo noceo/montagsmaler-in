@@ -283,7 +283,11 @@ export class WhiteboardComponent {
     shape.strokeColor = this.contextBaseColor;
     shape.strokeWidth = this.strokeWidth;
 
-    this.canvasService.drawShape(this.currentUser.id, shape, true);
+    this.canvasService.drawShape(
+      this.currentUser.id,
+      shape,
+      this.mode !== 'path'
+    );
     this.lastPoint = currentPos;
   }
 
@@ -320,23 +324,40 @@ export class WhiteboardComponent {
   }
 
   private sendNewPathChunk(isComplete: boolean = false) {
-    const newPoints = this.currentPath.slice(this.lastSentIndex);
-    const drawPathMessage: DrawPathMessage = {
-      type: MessageType.DRAW_PATH,
-      userId: this.currentUser.id,
-      data: {
+    const prevLastIndex =
+      this.lastSentIndex > 0 ? this.lastSentIndex - 1 : this.lastSentIndex;
+    const newPoints = this.currentPath.slice(prevLastIndex);
+    for (let i = 0; i < newPoints.length; i++) {
+      const line = this.canvasService.getShape(
+        'line',
+        newPoints[i],
+        newPoints[i + 1]
+      );
+      this.messagingService.send({
+        type: MessageType.DRAW_SHAPE,
         userId: this.currentUser.id,
-        pathId: this.currentPathId,
-        path: {
-          type: 'path',
-          points: newPoints,
-          strokeColor: this.contextBase.strokeStyle.toString(),
-          strokeWidth: this.strokeWidth,
+        data: {
+          geometry: line,
         },
-        isComplete: isComplete,
-      },
-    };
-    this.messagingService.send(drawPathMessage);
+      });
+    }
+
+    // const drawPathMessage: DrawPathMessage = {
+    //   type: MessageType.DRAW_PATH,
+    //   userId: this.currentUser.id,
+    //   data: {
+    //     userId: this.currentUser.id,
+    //     pathId: this.currentPathId,
+    //     path: {
+    //       type: 'path',
+    //       points: newPoints,
+    //       strokeColor: this.contextBase.strokeStyle.toString(),
+    //       strokeWidth: this.strokeWidth,
+    //     },
+    //     isComplete: isComplete,
+    //   },
+    // };
+    // this.messagingService.send(drawPathMessage);
     this.lastSentIndex = this.currentPath.length; // Update to the last point sent
   }
 
