@@ -1,110 +1,68 @@
-import { faker } from "@faker-js/faker";
-import bcrypt from "bcrypt";
-import { PrismaClient, Unit } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const prisma = new PrismaClient();
 
-const UNITS = [Unit.CUP, Unit.TABLESPOON, Unit.TEASPOON];
-
 async function main() {
-  // Create fixed users
-  const pwdAlice = await bcrypt.hash("aliceprisma", 10);
-  const pwdBob = await bcrypt.hash("bobprisma", 10);
-  const fixedUsers = [
-    { name: "Alice", email: "alice@prisma.io", password: pwdAlice },
-    { name: "Bob", email: "bob@prisma.io", password: pwdBob },
-  ];
+  // 1. Create the 'English' language
+  const englishLanguage = await prisma.language.create({
+    data: {
+      name: 'English',
+      code: 'en',
+    },
+  });
 
-  // Create random users
-  const randomUsers = Array.from({ length: 8 }, () => ({
-    name: faker.person.fullName(),
-    email: faker.internet.email(),
-    password: faker.internet.password(),
-  }));
-
-  // Combine fixed and random users
-  const allUsers = [...fixedUsers, ...randomUsers];
-
-  // Create users in the database
-  const createdUsers = await Promise.all(
-    allUsers.map((user) =>
-      prisma.user.create({
-        data: {
-          name: user.name,
-          email: user.email,
-          password: user.password,
-        },
-      })
-    )
+  // 2. Create difficulties from A1 to C2
+  const difficulties = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+  const difficultyEntries = await Promise.all(
+    difficulties.map(async (difficultyName) => {
+      return prisma.difficulty.upsert({
+        where: { name: difficultyName },
+        update: {},
+        create: { name: difficultyName },
+      });
+    })
   );
 
-  console.log("Created sample users.");
+  // 3. Read words from a text file (one word per line)
+  const wordsFilePath = path.join(__dirname, '..', 'word-lists', 'en.txt');
+  const wordsData = fs
+    .readFileSync(wordsFilePath, 'utf-8')
+    .split('\n')
+    .map((word) => word.trim())
+    .filter((word) => word);
 
-  // Create random ingredients
-  const ingredients = [];
-  for (let i = 0; i < 100; i++) {
-    const ingredient = await prisma.ingredient.create({
+  // 4. Insert words into the database with English language and random difficulty (A1 to C2)
+  for (const word of wordsData) {
+    // Assign a random difficulty level from the available difficulties
+    const randomDifficulty =
+      difficultyEntries[Math.floor(Math.random() * difficultyEntries.length)];
+
+    await prisma.word.create({
       data: {
-        name: faker.commerce.productName(),
+        word,
+        languageId: englishLanguage.id,
+        difficultyId: randomDifficulty.id,
       },
     });
-    ingredients.push(ingredient);
   }
 
-  console.log("Created sample ingredients.");
-
-  // Create recipes assigned to each user
-  const createdRecipes = [];
-  for (let i = 0; i < 10; i++) {
-    const randomUser =
-      createdUsers[Math.floor(Math.random() * createdUsers.length)];
-
-    const recipe = await prisma.recipe.create({
-      data: {
-        title: faker.commerce.product(),
-        description: faker.commerce.productDescription(),
-        published: true,
-        authorId: randomUser.id,
-      },
-    });
-
-    // Assign random ingredients to this recipe
-    const ingredientsToAdd = [];
-    const randomIngredientIds: Number[] = [];
-    for (let j = 0; j < 5; j++) {
-      let randomIngredientId = Math.floor(Math.random() * ingredients.length);
-      while (randomIngredientIds.includes(randomIngredientId)) {
-        randomIngredientId = Math.floor(Math.random() * ingredients.length);
-      }
-      randomIngredientIds.push(randomIngredientId);
-      const randomIngredient = ingredients[randomIngredientId];
-      const unit = UNITS[Math.floor(Math.random() * UNITS.length)];
-      const quantity = Math.floor(Math.random() * 100) + 1;
-
-      ingredientsToAdd.push({
-        recipeId: recipe.id,
-        ingredientId: randomIngredient.id,
-        unit: unit,
-        quantity: quantity,
-      });
-    }
-
-    // Create IngredientsOnRecipes entries
-    await prisma.ingredientsOnRecipes.createMany({
-      data: ingredientsToAdd,
-    });
-
-    createdRecipes.push(recipe);
-  }
-
-  console.log("Created sample recipes.");
+  console.log(
+    `Successfully seeded ${wordsData.length} words with difficulties!`
+  );
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
+  .catch((e) => {
     console.error(e);
-    await prisma.$disconnect();
     process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
   });
