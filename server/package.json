@@ -8,24 +8,27 @@
     "dev": "tsx watch server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "prisma": {
+    "seed": "tsx seed.ts"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@prisma/client": "^5.22.0",
     "body-parser": "^1.20.3",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "express-validator": "^7.2.0",
     "jaro-winkler": "^0.2.8",
     "nanoid": "^5.0.8",
-    "prisma": "^5.22.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@prisma/client": "^6.4.1",
     "@types/jaro-winkler": "^0.2.3",
     "nodemon": "^3.1.7",
+    "prisma": "^6.4.1",
     "tsx": "^4.19.2"
   }
 }
