@@ -13,8 +13,24 @@ datasource db {
   url      = "file:./montagsmaler-in.db"
 }
 
-model Session {
+model Language {
   id                 Int         @id @default(autoincrement())
   code               String      @unique
-  name               String?
+  name               String
+  words              Word[]
+}
+
+model Word {
+  id                 Int         @id @default(autoincrement())
+  word               String
+  difficulty         Difficulty  @relation(fields: [difficultyId], references: [id])
+  difficultyId       Int
+  language           Language    @relation(fields: [languageId], references: [id])
+  languageId         Int
+}
+
+model Difficulty {
+  id                 Int         @id @default(autoincrement())
+  name               String      @unique
+  words              Word[]
 }
