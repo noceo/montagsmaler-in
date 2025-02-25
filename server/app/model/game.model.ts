@@ -1,4 +1,5 @@
 import { WebSocketController } from '../controllers/websocket.controller';
+import { wordController } from '../controllers/word.controller';
 import {
   DrawStatus,
   GamePhase,
@@ -36,6 +37,7 @@ export class Game {
   private maxRounds: number;
   private chosenWord: string;
   private wordChoices: string[];
+  private seenWordIds: number[];
   private correctGuesses: number;
   private webSocketManager: WebSocketController;
   private roomCode: string;
@@ -57,6 +59,7 @@ export class Game {
     this.phaseDuration = PHASE_DURATIONS[GamePhase.PREPARE];
     this.chosenWord = '';
     this.wordChoices = ['test1', 'test2', 'test3'];
+    this.seenWordIds = [];
     this.correctGuesses = 0;
     this.webSocketManager = webSocketManager;
     this.roomCode = roomCode;
@@ -163,9 +166,17 @@ export class Game {
     this.resultPhase();
   }
 
-  private wordPickPhase(activeUser: User): Promise<void> {
+  private async getRandomWords(): Promise<string[]> {
+    return (
+      await wordController.getRandomWords('en', 'A1', this.seenWordIds)
+    ).map((word) => word.word);
+  }
+
+  private async wordPickPhase(activeUser: User): Promise<void> {
     this.phase = GamePhase.WORD_PICK;
     this.phaseDuration = PHASE_DURATIONS[GamePhase.WORD_PICK];
+
+    this.wordChoices = await this.getRandomWords();
     this.webSocketManager.broadcastToRoom(this.roomCode, {
       type: MessageType.GAME_STATUS,
       data: {
