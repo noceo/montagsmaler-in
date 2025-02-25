@@ -18,6 +18,13 @@ async function main() {
     },
   });
 
+  const germanLanguage = await prisma.language.create({
+    data: {
+      name: 'German',
+      code: 'de',
+    },
+  });
+
   // 2. Create difficulties from A1 to C2
   const difficulties = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
   const difficultyEntries = await Promise.all(
@@ -31,15 +38,22 @@ async function main() {
   );
 
   // 3. Read words from a text file (one word per line)
-  const wordsFilePath = path.join(__dirname, '..', 'word-lists', 'en.txt');
-  const wordsData = fs
-    .readFileSync(wordsFilePath, 'utf-8')
+  const enFilePath = path.join(__dirname, '..', 'word-lists', 'en.txt');
+  const enWordsData = fs
+    .readFileSync(enFilePath, 'utf-8')
+    .split('\n')
+    .map((word) => word.trim())
+    .filter((word) => word);
+
+  const deFilePath = path.join(__dirname, '..', 'word-lists', 'de.txt');
+  const deWordsData = fs
+    .readFileSync(deFilePath, 'utf-8')
     .split('\n')
     .map((word) => word.trim())
     .filter((word) => word);
 
   // 4. Insert words into the database with English language and random difficulty (A1 to C2)
-  for (const word of wordsData) {
+  for (const word of enWordsData) {
     // Assign a random difficulty level from the available difficulties
     const randomDifficulty =
       difficultyEntries[Math.floor(Math.random() * difficultyEntries.length)];
@@ -53,9 +67,23 @@ async function main() {
     });
   }
 
-  console.log(
-    `Successfully seeded ${wordsData.length} words with difficulties!`
-  );
+  console.log(`Successfully seeded ${enWordsData.length} English words!`);
+
+  for (const word of deWordsData) {
+    // Assign a random difficulty level from the available difficulties
+    const randomDifficulty =
+      difficultyEntries[Math.floor(Math.random() * difficultyEntries.length)];
+
+    await prisma.word.create({
+      data: {
+        word,
+        languageId: germanLanguage.id,
+        difficultyId: randomDifficulty.id,
+      },
+    });
+  }
+
+  console.log(`Successfully seeded ${deWordsData.length} German words!`);
 }
 
 main()
